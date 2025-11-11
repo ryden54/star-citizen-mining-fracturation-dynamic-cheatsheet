@@ -103,7 +103,7 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 **During development:**
 1. **Always run tests after modifications** - Use `npm test` to run both unit and E2E tests
-2. **Verify all tests pass** - All 23 unit tests + 39 E2E tests must pass before committing
+2. **Verify all tests pass** - ALL tests (unit + E2E) must pass before committing
 3. **Test incrementally** - Run tests after each significant change, not just at the end
 
 **Before committing:**
@@ -111,10 +111,16 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 2. **Explain what was done** - Summarize the changes clearly
 3. **Wait for confirmation** - Never commit without explicit user approval
 
+**Merging to main:**
+- **All feature branches must go through a Pull Request** - Never merge directly to main
+- Create PR after feature is complete and all tests pass
+- User will review and merge the PR
+
 **Why these rules exist:**
 - Misunderstandings are common - asking questions upfront prevents wasted work
 - Tests catch regressions and ensure quality
 - User review ensures the implementation matches their actual intent
+- PRs provide a clear review process and history
 
 ## Development Notes
 
@@ -123,3 +129,4 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 - Instability doesn't affect fracturing capacity, only control difficulty
 - Table updates automatically via `onchange` on laser selectors
 - **All UI text, variable names, and comments must be in English**
+- toutes les feature branches doivent passer par une PR pour être mergées dans main

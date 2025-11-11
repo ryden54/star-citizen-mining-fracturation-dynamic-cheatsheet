@@ -1,13 +1,8 @@
 import { test, expect } from './coverage-test.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const indexPath = 'file://' + path.resolve(__dirname, '..', 'public', 'index.html');
 
 test.describe('Star Citizen Mining Calculator', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto(indexPath);
+        await page.goto('/');
     });
 
     test('should load the page with correct title', async ({ page }) => {

@@ -367,12 +367,7 @@ function updateTable() {
     let html = '<table>';
     html += '<tr><th>Resistance</th>';
 
-    // Header with configuration
-    const configName = config.map((ship, i) => {
-        const modulesActive = ship.modules.filter(m => m !== 'none').length;
-        return `P${i+1}: ${laserData[ship.laser].name}${modulesActive > 0 ? ` (+${modulesActive} mod)` : ''}`;
-    }).join('<br>');
-    html += `<th>Maximum mass (kg)<br><small>${configName}</small></th>`;
+    html += `<th>Maximum mass for joined fracturation</th>`;
     html += '</tr>';
 
     resistanceLevels.forEach(resistance => {
@@ -388,22 +383,41 @@ function updateTable() {
     document.getElementById('capacity-table').innerHTML = html;
 }
 
-// Initialization (only in browser with proper DOM elements)
-if (typeof document !== 'undefined' && document.getElementById('ships-container')) {
-    // Initialize first ship modules
-    shipModules[0] = ['none', 'none', 'none'];
-    updateShipsUI();
-    updateTable();
+// Attach functions to window for onclick handlers
+if (typeof window !== 'undefined') {
+    window.addShip = addShip;
+    window.removeShip = removeShip;
+    window.onLaserChange = onLaserChange;
+    window.updateTable = updateTable;
+    window.checkRock = checkRock;
 }
 
-// Export functions for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        laserData,
-        moduleData,
-        calculateCombinedPower,
-        calculateCombinedModifiers,
-        calculateMaxMass,
-        canMine
-    };
+// Initialization function
+function initializeApp() {
+    if (document.getElementById('ships-container')) {
+        // Initialize first ship modules
+        shipModules[0] = ['none', 'none', 'none'];
+        updateShipsUI();
+        updateTable();
+    }
 }
+
+// Wait for DOM to be fully loaded before initializing
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+        // DOM already loaded, initialize immediately
+        initializeApp();
+    }
+}
+
+// Export functions for testing (ES6 exports)
+export {
+    laserData,
+    moduleData,
+    calculateCombinedPower,
+    calculateCombinedModifiers,
+    calculateMaxMass,
+    canMine
+};

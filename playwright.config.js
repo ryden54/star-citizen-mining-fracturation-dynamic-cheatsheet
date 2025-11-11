@@ -11,8 +11,14 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'file://' + process.cwd(),
+    baseURL: 'http://localhost:8080',
     trace: 'on-first-retry',
+  },
+  webServer: {
+    command: 'npx http-server public -p 8080 -c-1 --silent',
+    url: 'http://localhost:8080',
+    reuseExistingServer: !process.env.CI,
+    timeout: 10000,
   },
 
   projects: [
