@@ -29,42 +29,59 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 **Implemented:**
 - Multi-Prospector configuration (dynamic add/remove)
 - 4 mining laser types (Arbor, Hofstede, Helix, Lancet)
+- **Mining modules** (16 modules from 3 manufacturers, 3 slots per laser)
 - Capacity table by resistance level (0%-80%)
+- Module power multipliers (additive/multiplicative stacking)
 
 **To implement:**
 - **Mining gadgets** (e.g., Saber) - temporary power modifiers
 - Support for other ships (MOLE with 3 lasers, etc.)
 - Laser sizes (S0, S1, S2...)
-- Laser modifications
-- Ability to combine different configurations (e.g., Prospector + Saber gadget)
+- Ability to combine different ships (e.g., Prospector + MOLE)
 - Save/load favorite configurations
 
 ## Key Functions
 
 **Configuration:**
-- `addShip()`/`removeShip()`: Manage ship count
+- `addShip()`/`removeShip(index)`: Manage ship count
 - `updateShipsUI()`: Regenerate configuration UI
-- `getShipConfig()`: Extract selected lasers
+- `getShipConfig()`: Extract selected lasers and modules (returns `{laser, modules}` objects)
+- `onLaserChange(shipIndex)`: Handle laser changes and reset modules
 
 **Calculations:**
-- `calculateCombinedPower(lasers)`: Sum of power values
-- `calculateCombinedModifiers(lasers)`: Product of modifiers
-- `calculateMaxMass(resistance, lasers)`: Main max mass formula
+- `calculateCombinedPower(ships)`: Sum of power values with module multipliers
+- `calculateCombinedModifiers(ships)`: Product of laser modifiers (instability/resistance)
+- `calculateMaxMass(resistance, ships)`: Main max mass formula
 
 **User interface:**
-- `updateTable()`: Regenerate capacity table
+- `updateTable()`: Regenerate capacity table with module indicators
 
 ## Reference Data
 
 **Available lasers** (`laserData` object in `public/script.js`):
 ```javascript
 {
-  arbor: { power: 1.0, instability: 1.0, resistance: 1.0 },      // Default rental
-  hofstede: { power: 1.0, instability: 0.5, resistance: 1.0 },   // 6,375 aUEC
-  helix: { power: 1.3, instability: 0.5, resistance: 1.0 },      // 54,000 aUEC
-  lancet: { power: 0.85, instability: 0.7, resistance: 0.65 }    // Support
+  arbor: { power: 1850, instability: 1.0, resistance: 1.0, moduleSlots: 3 },      // Default rental
+  hofstede: { power: 1295, instability: 0.5, resistance: 0.7, moduleSlots: 3 },   // -30% resistance
+  helix: { power: 1850, instability: 0.6, resistance: 0.7, moduleSlots: 3 },      // -40% instability, -30% resistance
+  lancet: { power: 1850, instability: 0.7, resistance: 1.0, moduleSlots: 3 }      // -30% instability (support)
 }
 ```
+
+**Mining modules** (`moduleData` object - 3 slots per laser):
+- **Greycat** (easier control): FLTR, FLTR-L, FLTR-XL, XTR, XTR-L, XTR-XL
+  - Power: 0.85x - 0.95x
+  - Benefit: Wider optimal charge window (easier green zone)
+
+- **Thermyte** (faster charge): Focus, Focus II, Focus III
+  - Power: 0.85x - 0.95x
+  - Benefit: Faster charge rate (quicker fracturing)
+
+- **Shubin** (more power): Rieger, Rieger-C2, Rieger-C3, Vaux, Vaux-C2, Vaux-C3
+  - Power: 1.15x - 1.25x (+15% to +25%)
+  - Trade-off: More capacity but harder to control
+
+**Module stacking:** Multipliers stack multiplicatively (e.g., 3× Rieger = 1.15³ = 1.52x total)
 
 **Resistance levels tested:** 0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%
 
@@ -76,6 +93,28 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 1. Configure number of Prospectors
 2. Select lasers for each ship
 3. Consult automatically generated capacity table
+
+## Development Workflow (for AI assistants)
+
+**IMPORTANT: Before starting any implementation:**
+1. **Ask clarifying questions first** - Ask all necessary questions ONE AT A TIME before writing any code
+2. **Ensure full understanding** - Don't start coding until requirements are completely clear
+3. **Confirm approach** - Discuss the implementation approach with the user before proceeding
+
+**During development:**
+1. **Always run tests after modifications** - Use `npm test` to run both unit and E2E tests
+2. **Verify all tests pass** - All 23 unit tests + 39 E2E tests must pass before committing
+3. **Test incrementally** - Run tests after each significant change, not just at the end
+
+**Before committing:**
+1. **ALWAYS ask permission before committing** - The user must review and approve changes
+2. **Explain what was done** - Summarize the changes clearly
+3. **Wait for confirmation** - Never commit without explicit user approval
+
+**Why these rules exist:**
+- Misunderstandings are common - asking questions upfront prevents wasted work
+- Tests catch regressions and ensure quality
+- User review ensures the implementation matches their actual intent
 
 ## Development Notes
 
