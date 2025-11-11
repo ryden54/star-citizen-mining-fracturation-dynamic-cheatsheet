@@ -4,7 +4,7 @@ import {
     calculateCombinedPower,
     calculateCombinedModifiers,
     calculateMaxMass
-} from '../script.js';
+} from '../public/script.js';
 
 describe('Laser Data', () => {
     it('should have all laser types defined', () => {
