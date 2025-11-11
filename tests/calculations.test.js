@@ -57,15 +57,15 @@ describe('calculateCombinedPower', () => {
     });
 
     it('should apply module power multipliers', () => {
-        // Single Arbor with 1 Rieger module (+115% = 2.15x)
+        // Single Arbor with 1 Rieger module (+15% = 1.15x)
         const power = calculateCombinedPower([createShip('arbor', ['rieger', 'none', 'none'])]);
-        expect(power).toBeCloseTo(1850 * 2.15, 0); // 3977.5
+        expect(power).toBeCloseTo(1850 * 1.15, 0); // 2127.5
     });
 
     it('should stack multiple module multipliers', () => {
-        // Single Arbor with 3 Rieger modules (2.15 * 2.15 * 2.15)
+        // Single Arbor with 3 Rieger modules (1.15 * 1.15 * 1.15)
         const power = calculateCombinedPower([createShip('arbor', ['rieger', 'rieger', 'rieger'])]);
-        expect(power).toBeCloseTo(1850 * 2.15 * 2.15 * 2.15, 0); // ~18351
+        expect(power).toBeCloseTo(1850 * 1.15 * 1.15 * 1.15, 0); // ~2816
     });
 });
 
@@ -131,9 +131,10 @@ describe('calculateMaxMass', () => {
     it('should increase max mass with power-boosting modules', () => {
         // Single Arbor without modules
         const maxMassNoModules = calculateMaxMass(0.25, createShips('arbor'));
-        // Single Arbor with Rieger module (+115% power)
+        // Single Arbor with Rieger module (+15% power = 1.15x)
         const maxMassWithModule = calculateMaxMass(0.25, [createShip('arbor', ['rieger', 'none', 'none'])]);
-        expect(maxMassWithModule).toBeGreaterThan(maxMassNoModules * 2);
+        expect(maxMassWithModule).toBeGreaterThan(maxMassNoModules);
+        expect(maxMassWithModule).toBeCloseTo(maxMassNoModules * 1.15, -2);
     });
 });
 
@@ -168,7 +169,7 @@ describe('Real-world scenarios', () => {
     });
 
     it('should handle ships with mixed modules configuration', () => {
-        // One Arbor with Rieger, one Arbor with no modules
+        // One Arbor with Rieger (+15%), one Arbor with no modules
         const config = [
             createShip('arbor', ['rieger', 'none', 'none']),
             createShip('arbor', ['none', 'none', 'none'])
@@ -184,5 +185,15 @@ describe('Real-world scenarios', () => {
 
         expect(maxMass).toBeGreaterThan(twoPlain);
         expect(maxMass).toBeLessThan(twoRieger);
+    });
+
+    it('should handle power-reducing modules correctly', () => {
+        // Single Arbor with FLTR (-15% power = 0.85x)
+        const maxMassWithFLTR = calculateMaxMass(0.25, [createShip('arbor', ['fltr', 'none', 'none'])]);
+        const maxMassNoModule = calculateMaxMass(0.25, createShips('arbor'));
+
+        // FLTR should reduce capacity
+        expect(maxMassWithFLTR).toBeLessThan(maxMassNoModule);
+        expect(maxMassWithFLTR).toBeCloseTo(maxMassNoModule * 0.85, -2);
     });
 });

@@ -36,27 +36,29 @@ const laserData = {
 };
 
 // Mining modules data
-// Power multipliers: <1.0 = reduces power, >1.0 = increases power
+// Power multipliers: <1.0 = reduces extraction power, >1.0 = increases power
+// Note: Charge window and charge rate benefits are not modeled in mass calculations
+// (they only affect gameplay, not fracture capacity)
 const moduleData = {
     'none': { power: 1.0, name: '(None)', description: 'No module' },
-    // Greycat Industrial - Reduce power but increase charge window
-    'fltr': { power: 0.85, name: 'FLTR', description: 'Greycat - 15% power reduction' },
-    'fltr-l': { power: 0.90, name: 'FLTR-L', description: 'Greycat - 10% power reduction' },
-    'fltr-xl': { power: 0.95, name: 'FLTR-XL', description: 'Greycat - 5% power reduction' },
-    'xtr': { power: 0.85, name: 'XTR', description: 'Greycat - 15% power reduction, +15% charge window' },
-    'xtr-l': { power: 0.90, name: 'XTR-L', description: 'Greycat - 10% power reduction, +22% charge window' },
-    'xtr-xl': { power: 0.95, name: 'XTR-XL', description: 'Greycat - 5% power reduction, +25% charge window' },
-    // Thermyte Concern - Reduce power but increase charge rate
-    'focus': { power: 0.85, name: 'Focus', description: 'Thermyte - 15% power reduction, +30% charge rate' },
-    'focus-ii': { power: 0.90, name: 'Focus II', description: 'Thermyte - 10% power reduction, +37% charge rate' },
-    'focus-iii': { power: 0.95, name: 'Focus III', description: 'Thermyte - 5% power reduction, +40% charge rate' },
-    // Shubin Interstellar - Increase power (multiplicative boost)
-    'rieger': { power: 2.15, name: 'Rieger', description: 'Shubin - +115% power' },
-    'rieger-c2': { power: 2.20, name: 'Rieger-C2', description: 'Shubin - +120% power' },
-    'rieger-c3': { power: 2.25, name: 'Rieger-C3', description: 'Shubin - +125% power' },
-    'vaux': { power: 2.15, name: 'Vaux', description: 'Shubin - +115% power, extraction focus' },
-    'vaux-c2': { power: 2.20, name: 'Vaux-C2', description: 'Shubin - +120% power, extraction focus' },
-    'vaux-c3': { power: 2.25, name: 'Vaux-C3', description: 'Shubin - +125% power, extraction focus' }
+    // Greycat Industrial - Reduce power for wider optimal charge window (easier to use)
+    'fltr': { power: 0.85, name: 'FLTR', description: '-15% power (easier green zone)' },
+    'fltr-l': { power: 0.90, name: 'FLTR-L', description: '-10% power (easier green zone)' },
+    'fltr-xl': { power: 0.95, name: 'FLTR-XL', description: '-5% power (easier green zone)' },
+    'xtr': { power: 0.85, name: 'XTR', description: '-15% power, +15% optimal window' },
+    'xtr-l': { power: 0.90, name: 'XTR-L', description: '-10% power, +22% optimal window' },
+    'xtr-xl': { power: 0.95, name: 'XTR-XL', description: '-5% power, +25% optimal window' },
+    // Thermyte Concern - Reduce power for faster charge (quicker fracturing)
+    'focus': { power: 0.85, name: 'Focus', description: '-15% power, +30% charge speed' },
+    'focus-ii': { power: 0.90, name: 'Focus II', description: '-10% power, +37% charge speed' },
+    'focus-iii': { power: 0.95, name: 'Focus III', description: '-5% power, +40% charge speed' },
+    // Shubin Interstellar - Pure power boost (harder rocks, but harder to control)
+    'rieger': { power: 1.15, name: 'Rieger', description: '+15% power (harder to control)' },
+    'rieger-c2': { power: 1.20, name: 'Rieger-C2', description: '+20% power (harder to control)' },
+    'rieger-c3': { power: 1.25, name: 'Rieger-C3', description: '+25% power (harder to control)' },
+    'vaux': { power: 1.15, name: 'Vaux', description: '+15% power (extraction focus)' },
+    'vaux-c2': { power: 1.20, name: 'Vaux-C2', description: '+20% power (extraction focus)' },
+    'vaux-c3': { power: 1.25, name: 'Vaux-C3', description: '+25% power (extraction focus)' }
 };
 
 let shipCount = 1;
@@ -142,26 +144,26 @@ function updateShipsUI(preservedConfig = null) {
                     <label>Module ${slot + 1}</label>
                     <select id="module-${i}-${slot}" class="module-select" onchange="updateTable()">
                         <option value="none">(None)</option>
-                        <optgroup label="Greycat - Reduce Power">
-                            <option value="fltr">FLTR (-15% power)</option>
-                            <option value="fltr-l">FLTR-L (-10% power)</option>
-                            <option value="fltr-xl">FLTR-XL (-5% power)</option>
-                            <option value="xtr">XTR (-15% power)</option>
-                            <option value="xtr-l">XTR-L (-10% power)</option>
-                            <option value="xtr-xl">XTR-XL (-5% power)</option>
+                        <optgroup label="Greycat - Easier Control">
+                            <option value="fltr">FLTR (-15% power, easier)</option>
+                            <option value="fltr-l">FLTR-L (-10% power, easier)</option>
+                            <option value="fltr-xl">FLTR-XL (-5% power, easier)</option>
+                            <option value="xtr">XTR (-15% power, +15% window)</option>
+                            <option value="xtr-l">XTR-L (-10% power, +22% window)</option>
+                            <option value="xtr-xl">XTR-XL (-5% power, +25% window)</option>
                         </optgroup>
-                        <optgroup label="Thermyte - Reduce Power">
-                            <option value="focus">Focus (-15% power)</option>
-                            <option value="focus-ii">Focus II (-10% power)</option>
-                            <option value="focus-iii">Focus III (-5% power)</option>
+                        <optgroup label="Thermyte - Faster Charge">
+                            <option value="focus">Focus (-15% power, +30% speed)</option>
+                            <option value="focus-ii">Focus II (-10% power, +37% speed)</option>
+                            <option value="focus-iii">Focus III (-5% power, +40% speed)</option>
                         </optgroup>
-                        <optgroup label="Shubin - Increase Power">
-                            <option value="rieger">Rieger (+115% power)</option>
-                            <option value="rieger-c2">Rieger-C2 (+120% power)</option>
-                            <option value="rieger-c3">Rieger-C3 (+125% power)</option>
-                            <option value="vaux">Vaux (+115% power)</option>
-                            <option value="vaux-c2">Vaux-C2 (+120% power)</option>
-                            <option value="vaux-c3">Vaux-C3 (+125% power)</option>
+                        <optgroup label="Shubin - More Power">
+                            <option value="rieger">Rieger (+15% power)</option>
+                            <option value="rieger-c2">Rieger-C2 (+20% power)</option>
+                            <option value="rieger-c3">Rieger-C3 (+25% power)</option>
+                            <option value="vaux">Vaux (+15% power)</option>
+                            <option value="vaux-c2">Vaux-C2 (+20% power)</option>
+                            <option value="vaux-c3">Vaux-C3 (+25% power)</option>
                         </optgroup>
                     </select>
                 </div>
