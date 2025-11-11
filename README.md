@@ -11,19 +11,16 @@ In solo mining, the game displays "easy/medium/challenging/impossible", but in c
 - ✅ Multi-Prospector configuration (add/remove ships dynamically)
 - ✅ 4 mining laser types (Arbor, Hofstede, Helix, Lancet)
 - ✅ Real-time capacity table by resistance level (0%-80%)
-- ✅ Specific rock verification (mass/resistance/instability)
-- ✅ Difficulty classification (impossible/very difficult/difficult/easy)
 
 ## Usage
 
-Simply open `index.html` in any modern browser. No build process or server required.
+Simply open `public/index.html` in any modern browser. No build process or server required.
 
 ### Typical Workflow
 
 1. Configure the number of Prospectors
 2. Select lasers for each ship
 3. Consult the automatically generated capacity table
-4. (Optional) Test a specific rock by entering mass/resistance/instability
 
 ## Testing
 
@@ -84,9 +81,6 @@ tests/
 - Adding/removing Prospectors
 - Laser selection and preservation
 - Capacity table updates
-- Rock property inputs
-- Fracturability checks
-- Difficulty color coding
 - Multi-ship capacity increase
 
 ### CI/CD
@@ -103,9 +97,10 @@ Tests run automatically on GitHub Actions for every push and pull request to the
 
 ```
 .
-├── index.html              # Main HTML structure
-├── style.css               # All styling
-├── script.js               # Application logic
+├── public/                 # Web assets
+│   ├── index.html         # Main HTML structure
+│   ├── style.css          # All styling
+│   └── script.js          # Application logic
 ├── tests/
 │   ├── calculations.test.js   # Unit tests
 │   └── app.e2e.js             # E2E tests
@@ -128,9 +123,9 @@ The application is a single-page app with no build process:
 
 ### Making Changes
 
-1. Edit `index.html`, `style.css`, or `script.js`
+1. Edit files in `public/` directory (`index.html`, `style.css`, or `script.js`)
 2. Run tests to ensure nothing breaks: `npm test`
-3. Open `index.html` in browser to manually verify
+3. Open `public/index.html` in browser to manually verify
 4. Commit changes (tests will run on GitHub)
 
 ## Roadmap

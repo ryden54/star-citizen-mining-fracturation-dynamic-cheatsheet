@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const indexPath = 'file://' + path.resolve(__dirname, '..', 'index.html');
+const indexPath = 'file://' + path.resolve(__dirname, '..', 'public', 'index.html');
 
 test.describe('Star Citizen Mining Calculator', () => {
     test.beforeEach(async ({ page }) => {
@@ -11,8 +11,8 @@ test.describe('Star Citizen Mining Calculator', () => {
     });
 
     test('should load the page with correct title', async ({ page }) => {
-        await expect(page).toHaveTitle(/Mining fracturation party dynamic CheatSheet/);
-        await expect(page.locator('h1')).toContainText('Mining Fracturation Party Dynamic CheatSheet');
+        await expect(page).toHaveTitle(/Star Citizen fracturation party dynamic CheatSheet/);
+        await expect(page.locator('h1')).toContainText('Star Citizen Fracturation Party Dynamic CheatSheet');
     });
 
     test('should display initial configuration with one Prospector', async ({ page }) => {
@@ -29,7 +29,7 @@ test.describe('Star Citizen Mining Calculator', () => {
         await expect(page.locator('label').nth(1)).toContainText('Prospector #2');
     });
 
-    test('should remove a Prospector when clicking remove button', async ({ page }) => {
+    test('should remove a Prospector when clicking individual remove button', async ({ page }) => {
         // Add two prospectors first
         await page.click('button:has-text("Add a Prospector")');
         await page.click('button:has-text("Add a Prospector")');
@@ -37,19 +37,33 @@ test.describe('Star Citizen Mining Calculator', () => {
         let shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(3);
 
-        // Remove one
-        await page.click('button:has-text("Remove a Prospector")');
+        // Remove one using the individual remove button
+        const removeButton = page.locator('.remove-ship-btn').first();
+        await removeButton.click();
 
         shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(2);
     });
 
-    test('should not remove below one Prospector', async ({ page }) => {
-        const removeButton = page.locator('button:has-text("Remove a Prospector")');
-        await removeButton.click();
+    test('should not show remove button when only one Prospector', async ({ page }) => {
+        // With only one prospector, there should be no remove button
+        const removeButton = page.locator('.remove-ship-btn');
+        await expect(removeButton).toHaveCount(0);
 
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(1);
+    });
+
+    test('should show remove buttons when multiple Prospectors exist', async ({ page }) => {
+        // Add a second prospector
+        await page.click('button:has-text("Add a Prospector")');
+
+        const shipItems = page.locator('.ship-item');
+        await expect(shipItems).toHaveCount(2);
+
+        // Both ships should have remove buttons
+        const removeButtons = page.locator('.remove-ship-btn');
+        await expect(removeButtons).toHaveCount(2);
     });
 
     test('should display capacity table on load', async ({ page }) => {
@@ -86,10 +100,10 @@ test.describe('Star Citizen Mining Calculator', () => {
         const options = laserSelect.locator('option');
 
         await expect(options).toHaveCount(4);
-        await expect(options.nth(0)).toHaveText('Arbor (default rental)');
-        await expect(options.nth(1)).toHaveText('Hofstede S1 (6,375 aUEC)');
-        await expect(options.nth(2)).toHaveText('Helix I (54,000 aUEC)');
-        await expect(options.nth(3)).toHaveText('Lancet MH1 (support)');
+        await expect(options.nth(0)).toHaveText('Arbor (default)');
+        await expect(options.nth(1)).toHaveText('Hofstede S1 (Inst: -50%, Res: -30%)');
+        await expect(options.nth(2)).toHaveText('Helix I (Inst: -40%, Res: -30%)');
+        await expect(options.nth(3)).toHaveText('Lancet MH1 (Inst: -30%)');
     });
 
     test('should preserve laser selection when adding ships', async ({ page }) => {

@@ -12,12 +12,10 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 ## Technical Architecture
 
-**Target structure:** Separate files for maintainability
-- `index.html` - HTML structure only
-- `style.css` - All styling (separate file)
-- `script.js` - All JavaScript logic (separate file)
-
-**Current state:** Single-file `index.html` with embedded CSS (lines 8-194) and JavaScript (lines 253-434) - needs to be split into separate files.
+**Structure:** Separate files for maintainability (in `public/` directory)
+- `public/index.html` - HTML structure only
+- `public/style.css` - All styling
+- `public/script.js` - All JavaScript logic
 
 **Calculation system:**
 - Laser database with power/instability/resistance multipliers
@@ -32,8 +30,6 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 - Multi-Prospector configuration (dynamic add/remove)
 - 4 mining laser types (Arbor, Hofstede, Helix, Lancet)
 - Capacity table by resistance level (0%-80%)
-- Specific rock verification (mass/resistance/instability)
-- Difficulty classification (impossible/very difficult/difficult/easy)
 
 **To implement:**
 - **Mining gadgets** (e.g., Saber) - temporary power modifiers
@@ -51,18 +47,16 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 - `getShipConfig()`: Extract selected lasers
 
 **Calculations:**
-- `calculateCombinedPower(lasers)`: Sum of power values (index.html:307)
-- `calculateCombinedModifiers(lasers)`: Product of modifiers (index.html:316)
-- `calculateMaxMass(resistance, lasers)`: Main max mass formula (index.html:329)
-- `canMine(mass, resistance, lasers)`: Determine feasibility + difficulty (index.html:350)
+- `calculateCombinedPower(lasers)`: Sum of power values
+- `calculateCombinedModifiers(lasers)`: Product of modifiers
+- `calculateMaxMass(resistance, lasers)`: Main max mass formula
 
 **User interface:**
-- `checkRock()`: Analyze specific rock (index.html:364)
-- `updateTable()`: Regenerate capacity table (index.html:404)
+- `updateTable()`: Regenerate capacity table
 
 ## Reference Data
 
-**Available lasers** (`laserData` object, index.html:255):
+**Available lasers** (`laserData` object in `public/script.js`):
 ```javascript
 {
   arbor: { power: 1.0, instability: 1.0, resistance: 1.0 },      // Default rental
@@ -74,21 +68,14 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 **Resistance levels tested:** 0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%
 
-**Difficulty thresholds:**
-- Impossible: mass > maxMass × 1.2
-- Very difficult: mass > maxMass
-- Difficult: mass > maxMass × 0.8
-- Easy: mass ≤ maxMass × 0.8
-
 ## Usage
 
-**Open application:** Double-click `index.html` (no dependencies, no build process)
+**Open application:** Double-click `public/index.html` (no dependencies, no build process)
 
 **Typical workflow:**
 1. Configure number of Prospectors
 2. Select lasers for each ship
 3. Consult automatically generated capacity table
-4. (Optional) Test specific rock by entering mass/resistance/instability
 
 ## Development Notes
 
@@ -97,4 +84,3 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 - Instability doesn't affect fracturing capacity, only control difficulty
 - Table updates automatically via `onchange` on laser selectors
 - **All UI text, variable names, and comments must be in English**
-- **CSS and JavaScript should be extracted to separate files for better maintainability**

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background document/sheet -->
+  <rect x="6" y="6" width="52" height="52" rx="4" fill="#f8f9fa" stroke="#343a40" stroke-width="2"/>
+
+  <!-- Grid lines (cheatsheet - 6 lines) -->
+  <line x1="12" y1="16" x2="52" y2="16" stroke="#6c757d" stroke-width="1.2"/>
+  <line x1="12" y1="22" x2="52" y2="22" stroke="#6c757d" stroke-width="1.2"/>
+  <line x1="12" y1="28" x2="52" y2="28" stroke="#6c757d" stroke-width="1.2"/>
+  <line x1="12" y1="34" x2="52" y2="34" stroke="#6c757d" stroke-width="1.2"/>
+  <line x1="12" y1="40" x2="52" y2="40" stroke="#6c757d" stroke-width="1.2"/>
+  <line x1="12" y1="46" x2="52" y2="46" stroke="#6c757d" stroke-width="1.2"/>
+
+  <!-- Mining laser (red beam) -->
+  <g>
+    <!-- Laser device/gun -->
+    <rect x="48" y="50" width="8" height="4" rx="1" fill="#555" stroke="#333" stroke-width="0.5"/>
+    <rect x="50" y="52" width="4" height="2" fill="#888"/>
+
+    <!-- Red laser beam -->
+    <line x1="50" y1="52" x2="22" y2="24" stroke="#ff0000" stroke-width="2.5" opacity="0.8"/>
+    <line x1="50" y1="52" x2="22" y2="24" stroke="#ff6666" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Laser glow effect -->
+    <circle cx="22" cy="24" r="3" fill="#ff0000" opacity="0.4"/>
+    <circle cx="22" cy="24" r="1.5" fill="#ff0000" opacity="0.8"/>
+  </g>
+
+  <!-- Crystal/rock target -->
+  <path d="M 20 20 L 24 18 L 26 22 L 24 26 L 20 24 Z" fill="#87ceeb" stroke="#4682b4" stroke-width="1" opacity="0.9"/>
+</svg>

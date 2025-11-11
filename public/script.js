@@ -39,25 +39,40 @@ function addShip() {
     updateTable();
 }
 
-function removeShip() {
+function removeShip(index) {
     if (shipCount > 1) {
+        // Save current configuration before removing
+        const currentConfig = [];
+        for (let i = 0; i < shipCount; i++) {
+            const laserSelect = document.getElementById(`laser-${i}`);
+            if (laserSelect) {
+                currentConfig.push(laserSelect.value);
+            }
+        }
+
+        // Remove the ship at the specified index
+        currentConfig.splice(index, 1);
         shipCount--;
-        updateShipsUI();
+
+        // Update UI with the modified configuration
+        updateShipsUI(currentConfig);
         updateTable();
     }
 }
 
-function updateShipsUI() {
+function updateShipsUI(preservedConfig = null) {
     const container = document.getElementById('ships-container');
 
-    // Save current configuration before rebuilding UI
-    const currentConfig = [];
-    for (let i = 0; i < shipCount; i++) {
-        const laserSelect = document.getElementById(`laser-${i}`);
-        if (laserSelect) {
-            currentConfig.push(laserSelect.value);
-        } else {
-            currentConfig.push('arbor'); // Default for new ships
+    // Save current configuration before rebuilding UI (if not provided)
+    const currentConfig = preservedConfig || [];
+    if (!preservedConfig) {
+        for (let i = 0; i < shipCount; i++) {
+            const laserSelect = document.getElementById(`laser-${i}`);
+            if (laserSelect) {
+                currentConfig.push(laserSelect.value);
+            } else {
+                currentConfig.push('arbor'); // Default for new ships
+            }
         }
     }
 
@@ -69,11 +84,12 @@ function updateShipsUI() {
         shipDiv.innerHTML = `
             <label>Prospector #${i + 1}</label>
             <select id="laser-${i}" onchange="updateTable()">
-                <option value="arbor">Arbor (default rental)</option>
-                <option value="hofstede">Hofstede S1 (6,375 aUEC)</option>
-                <option value="helix">Helix I (54,000 aUEC)</option>
-                <option value="lancet">Lancet MH1 (support)</option>
+                <option value="arbor">Arbor (default)</option>
+                <option value="hofstede">Hofstede S1 (Inst: -50%, Res: -30%)</option>
+                <option value="helix">Helix I (Inst: -40%, Res: -30%)</option>
+                <option value="lancet">Lancet MH1 (Inst: -30%)</option>
             </select>
+            ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
         `;
         container.appendChild(shipDiv);
 
