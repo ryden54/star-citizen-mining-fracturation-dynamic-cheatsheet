@@ -5,6 +5,10 @@ node_modules/
 playwright-report/
 test-results/
 coverage/
+coverage-v8/
+coverage-e2e/
+.nyc_output/
+coverage.json
 
 # Playwright
 .playwright/
