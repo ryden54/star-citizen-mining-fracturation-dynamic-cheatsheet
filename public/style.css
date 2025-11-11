@@ -81,6 +81,47 @@ h2 {
     box-shadow: 0 3px 10px rgba(255, 68, 68, 0.5);
 }
 
+.ship-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.ship-header label {
+    margin-bottom: 0;
+    font-size: 1.1em;
+    color: #00d4ff;
+}
+
+.laser-select-container {
+    margin-bottom: 15px;
+}
+
+.modules-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.module-slot {
+    display: flex;
+    flex-direction: column;
+}
+
+.module-slot label {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.module-select {
+    font-size: 0.9em;
+}
+
 label {
     display: block;
     margin-bottom: 8px;

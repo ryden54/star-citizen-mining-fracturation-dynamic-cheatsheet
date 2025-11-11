@@ -5,6 +5,7 @@ const laserData = {
         power: 1850,
         instability: 1.0,
         resistance: 1.0,
+        moduleSlots: 3,
         name: 'Arbor (default)',
         description: 'Standard rental laser - balanced but limited power'
     },
@@ -12,6 +13,7 @@ const laserData = {
         power: 1295,
         instability: 0.5,
         resistance: 0.7,  // -30% resistance bonus
+        moduleSlots: 3,
         name: 'Hofstede S1',
         description: 'Lower power but excellent resistance reduction'
     },
@@ -19,6 +21,7 @@ const laserData = {
         power: 1850,
         instability: 0.6,  // -40% inert materials
         resistance: 0.7,   // -30% resistance bonus
+        moduleSlots: 3,
         name: 'Helix I',
         description: 'Same extraction power as Arbor but better modifiers'
     },
@@ -26,12 +29,38 @@ const laserData = {
         power: 1850,
         instability: 0.7,
         resistance: 1.0,
+        moduleSlots: 3,
         name: 'Lancet MH1',
         description: 'Support laser - reduces instability for team mining'
     }
 };
 
+// Mining modules data
+// Power multipliers: <1.0 = reduces power, >1.0 = increases power
+const moduleData = {
+    'none': { power: 1.0, name: '(None)', description: 'No module' },
+    // Greycat Industrial - Reduce power but increase charge window
+    'fltr': { power: 0.85, name: 'FLTR', description: 'Greycat - 15% power reduction' },
+    'fltr-l': { power: 0.90, name: 'FLTR-L', description: 'Greycat - 10% power reduction' },
+    'fltr-xl': { power: 0.95, name: 'FLTR-XL', description: 'Greycat - 5% power reduction' },
+    'xtr': { power: 0.85, name: 'XTR', description: 'Greycat - 15% power reduction, +15% charge window' },
+    'xtr-l': { power: 0.90, name: 'XTR-L', description: 'Greycat - 10% power reduction, +22% charge window' },
+    'xtr-xl': { power: 0.95, name: 'XTR-XL', description: 'Greycat - 5% power reduction, +25% charge window' },
+    // Thermyte Concern - Reduce power but increase charge rate
+    'focus': { power: 0.85, name: 'Focus', description: 'Thermyte - 15% power reduction, +30% charge rate' },
+    'focus-ii': { power: 0.90, name: 'Focus II', description: 'Thermyte - 10% power reduction, +37% charge rate' },
+    'focus-iii': { power: 0.95, name: 'Focus III', description: 'Thermyte - 5% power reduction, +40% charge rate' },
+    // Shubin Interstellar - Increase power (multiplicative boost)
+    'rieger': { power: 2.15, name: 'Rieger', description: 'Shubin - +115% power' },
+    'rieger-c2': { power: 2.20, name: 'Rieger-C2', description: 'Shubin - +120% power' },
+    'rieger-c3': { power: 2.25, name: 'Rieger-C3', description: 'Shubin - +125% power' },
+    'vaux': { power: 2.15, name: 'Vaux', description: 'Shubin - +115% power, extraction focus' },
+    'vaux-c2': { power: 2.20, name: 'Vaux-C2', description: 'Shubin - +120% power, extraction focus' },
+    'vaux-c3': { power: 2.25, name: 'Vaux-C3', description: 'Shubin - +125% power, extraction focus' }
+};
+
 let shipCount = 1;
+let shipModules = {}; // Store modules for each ship: { 0: ['none', 'none', 'none'], 1: [...] }
 
 function addShip() {
     shipCount++;
@@ -52,6 +81,20 @@ function removeShip(index) {
 
         // Remove the ship at the specified index
         currentConfig.splice(index, 1);
+
+        // Remove modules for this ship and reindex
+        delete shipModules[index];
+        const newModules = {};
+        Object.keys(shipModules).forEach(key => {
+            const shipIndex = parseInt(key);
+            if (shipIndex > index) {
+                newModules[shipIndex - 1] = shipModules[shipIndex];
+            } else if (shipIndex < index) {
+                newModules[shipIndex] = shipModules[shipIndex];
+            }
+        });
+        shipModules = newModules;
+
         shipCount--;
 
         // Update UI with the modified configuration
@@ -73,6 +116,11 @@ function updateShipsUI(preservedConfig = null) {
             } else {
                 currentConfig.push('arbor'); // Default for new ships
             }
+
+            // Save module configuration
+            if (!shipModules[i]) {
+                shipModules[i] = ['none', 'none', 'none'];
+            }
         }
     }
 
@@ -81,60 +129,151 @@ function updateShipsUI(preservedConfig = null) {
     for (let i = 0; i < shipCount; i++) {
         const shipDiv = document.createElement('div');
         shipDiv.className = 'ship-item';
+
+        // Get the number of module slots for this laser
+        const laser = currentConfig[i] || 'arbor';
+        const moduleSlots = laserData[laser].moduleSlots;
+
+        // Generate module select dropdowns
+        let modulesHTML = '';
+        for (let slot = 0; slot < moduleSlots; slot++) {
+            modulesHTML += `
+                <div class="module-slot">
+                    <label>Module ${slot + 1}</label>
+                    <select id="module-${i}-${slot}" class="module-select" onchange="updateTable()">
+                        <option value="none">(None)</option>
+                        <optgroup label="Greycat - Reduce Power">
+                            <option value="fltr">FLTR (-15% power)</option>
+                            <option value="fltr-l">FLTR-L (-10% power)</option>
+                            <option value="fltr-xl">FLTR-XL (-5% power)</option>
+                            <option value="xtr">XTR (-15% power)</option>
+                            <option value="xtr-l">XTR-L (-10% power)</option>
+                            <option value="xtr-xl">XTR-XL (-5% power)</option>
+                        </optgroup>
+                        <optgroup label="Thermyte - Reduce Power">
+                            <option value="focus">Focus (-15% power)</option>
+                            <option value="focus-ii">Focus II (-10% power)</option>
+                            <option value="focus-iii">Focus III (-5% power)</option>
+                        </optgroup>
+                        <optgroup label="Shubin - Increase Power">
+                            <option value="rieger">Rieger (+115% power)</option>
+                            <option value="rieger-c2">Rieger-C2 (+120% power)</option>
+                            <option value="rieger-c3">Rieger-C3 (+125% power)</option>
+                            <option value="vaux">Vaux (+115% power)</option>
+                            <option value="vaux-c2">Vaux-C2 (+120% power)</option>
+                            <option value="vaux-c3">Vaux-C3 (+125% power)</option>
+                        </optgroup>
+                    </select>
+                </div>
+            `;
+        }
+
         shipDiv.innerHTML = `
-            <label>Prospector #${i + 1}</label>
-            <select id="laser-${i}" onchange="updateTable()">
-                <option value="arbor">Arbor (default)</option>
-                <option value="hofstede">Hofstede S1 (Inst: -50%, Res: -30%)</option>
-                <option value="helix">Helix I (Inst: -40%, Res: -30%)</option>
-                <option value="lancet">Lancet MH1 (Inst: -30%)</option>
-            </select>
-            ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
+            <div class="ship-header">
+                <label>Prospector #${i + 1}</label>
+                ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
+            </div>
+            <div class="laser-select-container">
+                <label>Mining Head</label>
+                <select id="laser-${i}" onchange="onLaserChange(${i})">
+                    <option value="arbor">Arbor (default)</option>
+                    <option value="hofstede">Hofstede S1 (Inst: -50%, Res: -30%)</option>
+                    <option value="helix">Helix I (Inst: -40%, Res: -30%)</option>
+                    <option value="lancet">Lancet MH1 (Inst: -30%)</option>
+                </select>
+            </div>
+            <div class="modules-container">
+                ${modulesHTML}
+            </div>
         `;
         container.appendChild(shipDiv);
 
-        // Restore previous selection
+        // Restore previous laser selection
         const laserSelect = document.getElementById(`laser-${i}`);
         if (currentConfig[i]) {
             laserSelect.value = currentConfig[i];
         }
+
+        // Restore previous module selections
+        if (shipModules[i]) {
+            for (let slot = 0; slot < moduleSlots; slot++) {
+                const moduleSelect = document.getElementById(`module-${i}-${slot}`);
+                if (moduleSelect && shipModules[i][slot]) {
+                    moduleSelect.value = shipModules[i][slot];
+                }
+            }
+        }
     }
+}
+
+function onLaserChange(shipIndex) {
+    // Reset modules when laser changes
+    const laser = document.getElementById(`laser-${shipIndex}`).value;
+    const moduleSlots = laserData[laser].moduleSlots;
+    shipModules[shipIndex] = Array(moduleSlots).fill('none');
+    updateShipsUI();
+    updateTable();
 }
 
 function getShipConfig() {
     const config = [];
     for (let i = 0; i < shipCount; i++) {
         const laserSelect = document.getElementById(`laser-${i}`);
-        config.push(laserSelect.value);
+        const laser = laserSelect.value;
+
+        // Get modules for this ship
+        const modules = [];
+        const moduleSlots = laserData[laser].moduleSlots;
+        for (let slot = 0; slot < moduleSlots; slot++) {
+            const moduleSelect = document.getElementById(`module-${i}-${slot}`);
+            if (moduleSelect) {
+                modules.push(moduleSelect.value);
+                // Save to global state
+                if (!shipModules[i]) shipModules[i] = [];
+                shipModules[i][slot] = moduleSelect.value;
+            }
+        }
+
+        config.push({ laser, modules });
     }
     return config;
 }
 
-function calculateCombinedPower(lasers) {
-    // Power is additive - sum of all laser extraction powers
+function calculateCombinedPower(ships) {
+    // Power is additive - sum of all laser extraction powers (with module multipliers)
     let totalPower = 0;
-    lasers.forEach(laser => {
-        totalPower += laserData[laser].power;
+    ships.forEach(ship => {
+        let laserPower = laserData[ship.laser].power;
+
+        // Apply module power multipliers (multiplicative)
+        let modulePowerMultiplier = 1.0;
+        ship.modules.forEach(moduleKey => {
+            if (moduleKey && moduleKey !== 'none') {
+                modulePowerMultiplier *= moduleData[moduleKey].power;
+            }
+        });
+
+        totalPower += laserPower * modulePowerMultiplier;
     });
     return totalPower;
 }
 
-function calculateCombinedModifiers(lasers) {
+function calculateCombinedModifiers(ships) {
     // Modifiers multiply (diminishing returns)
     let instabilityMod = 1.0;
     let resistanceMod = 1.0;
 
-    lasers.forEach(laser => {
-        instabilityMod *= laserData[laser].instability;
-        resistanceMod *= laserData[laser].resistance;
+    ships.forEach(ship => {
+        instabilityMod *= laserData[ship.laser].instability;
+        resistanceMod *= laserData[ship.laser].resistance;
     });
 
     return { instability: instabilityMod, resistance: resistanceMod };
 }
 
-function calculateMaxMass(resistance, lasers) {
-    const combinedPower = calculateCombinedPower(lasers);
-    const modifiers = calculateCombinedModifiers(lasers);
+function calculateMaxMass(resistance, ships) {
+    const combinedPower = calculateCombinedPower(ships);
+    const modifiers = calculateCombinedModifiers(ships);
 
     // New realistic formula based on Star Citizen 4.x community data
     // Baseline: 1 Arbor (1850 power) can fracture ~8000kg at 0% resistance
@@ -165,8 +304,8 @@ function calculateMaxMass(resistance, lasers) {
     return Math.round(maxMass);
 }
 
-function canMine(mass, resistance, lasers) {
-    const maxMass = calculateMaxMass(resistance, lasers);
+function canMine(mass, resistance, ships) {
+    const maxMass = calculateMaxMass(resistance, ships);
 
     if (mass > maxMass * 1.2) {
         return { possible: false, difficulty: 'impossible', color: 'cannot-mine' };
@@ -227,7 +366,10 @@ function updateTable() {
     html += '<tr><th>Resistance</th>';
 
     // Header with configuration
-    const configName = config.map((laser, i) => `P${i+1}: ${laserData[laser].name}`).join('<br>');
+    const configName = config.map((ship, i) => {
+        const modulesActive = ship.modules.filter(m => m !== 'none').length;
+        return `P${i+1}: ${laserData[ship.laser].name}${modulesActive > 0 ? ` (+${modulesActive} mod)` : ''}`;
+    }).join('<br>');
     html += `<th>Maximum mass (kg)<br><small>${configName}</small></th>`;
     html += '</tr>';
 
@@ -246,6 +388,8 @@ function updateTable() {
 
 // Initialization (only in browser with proper DOM elements)
 if (typeof document !== 'undefined' && document.getElementById('ships-container')) {
+    // Initialize first ship modules
+    shipModules[0] = ['none', 'none', 'none'];
     updateShipsUI();
     updateTable();
 }
@@ -254,6 +398,7 @@ if (typeof document !== 'undefined' && document.getElementById('ships-container'
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         laserData,
+        moduleData,
         calculateCombinedPower,
         calculateCombinedModifiers,
         calculateMaxMass,

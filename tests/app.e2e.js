@@ -18,7 +18,7 @@ test.describe('Star Citizen Mining Calculator', () => {
     test('should display initial configuration with one Prospector', async ({ page }) => {
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(1);
-        await expect(shipItems.first().locator('label')).toContainText('Prospector #1');
+        await expect(shipItems.first().locator('.ship-header label')).toContainText('Prospector #1');
     });
 
     test('should add a Prospector when clicking add button', async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(2);
-        await expect(page.locator('label').nth(1)).toContainText('Prospector #2');
+        await expect(shipItems.nth(1).locator('.ship-header label')).toContainText('Prospector #2');
     });
 
     test('should remove a Prospector when clicking individual remove button', async ({ page }) => {
