@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mining fracturation party dynamic CheatSheet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⛏️ Mining Fracturation Party Dynamic CheatSheet</h1>
+        <p class="subtitle">Star Citizen 4.0+ - Calculate if you can fracture a rock with your configuration</p>
+
+        <div class="config-section">
+            <h2>🚀 Party Setup</h2>
+            <div id="ships-container"></div>
+            <button onclick="addShip()">+ Add a Prospector</button>
+            <button onclick="removeShip()" style="background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);">- Remove a Prospector</button>
+        </div>
+
+        <div class="config-section">
+            <h2>📊 Fracturation CheatSheet (at optimal distance)</h2>
+            <div class="info-box">
+                <strong>⚠️ Important:</strong> These values are <strong>approximations</strong> based on Star Citizen 4.x community data and testing. Actual in-game results may vary depending on rock composition, distance, charge rate, and game updates. Use this as a general reference, not exact values. Always verify with the in-game prospecting interface during cooperative mining.
+            </div>
+            <div id="capacity-table"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
