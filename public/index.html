@@ -16,7 +16,7 @@
             <div class="form-column">
                 <div class="config-section">
                     <h2>🚀 Party Setup</h2>
-                    <button onclick="addShip()">+ Add a Prospector</button>
+                    <button onclick="FracturationParty.ui.addShip()">+ Add a Prospector</button>
                     <div id="ships-container"></div>
                 </div>
             </div>
@@ -33,6 +33,20 @@
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <!-- Load scripts in dependency order (classic scripts work with file:// URLs) -->
+    <script src="js/data.js"></script>
+    <script src="js/calculations.js"></script>
+    <script src="js/ui.js"></script>
+
+    <!-- Initialize UI after all scripts are loaded -->
+    <script>
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                window.FracturationParty.ui.initializeUI();
+            });
+        } else {
+            window.FracturationParty.ui.initializeUI();
+        }
+    </script>
 </body>
 </html>

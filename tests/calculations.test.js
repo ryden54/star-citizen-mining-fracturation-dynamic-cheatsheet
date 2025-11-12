@@ -5,7 +5,7 @@ import {
     calculateCombinedPower,
     calculateCombinedModifiers,
     calculateMaxMass
-} from '../public/script.js';
+} from '../public/js/app.js';
 
 // Helper function to create ship configurations
 function createShip(laser, modules = ['none', 'none', 'none']) {

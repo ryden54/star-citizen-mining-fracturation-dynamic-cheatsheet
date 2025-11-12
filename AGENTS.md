@@ -12,17 +12,26 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 ## Technical Architecture
 
-**Structure:** Separate files for maintainability (in `public/` directory)
+**Structure:** Modular JavaScript with dual-compatibility (in `public/` directory)
 - `public/index.html` - HTML structure only
 - `public/style.css` - All styling
-- `public/script.js` - All JavaScript logic
+- `public/js/data.js` - Laser and module data (window.FracturationParty.data)
+- `public/js/calculations.js` - Mining calculations (window.FracturationParty.calculations)
+- `public/js/ui.js` - UI state and DOM manipulation (window.FracturationParty.ui)
+- `public/js/app.js` - Initialization and test exports (ES6 module)
+
+**Dual-compatibility approach:**
+- Files work as classic scripts in browser (file:// URLs, no CORS issues)
+- Files export via ES6 for test compatibility
+- Browser dependencies accessed via window.FracturationParty namespace
+- Maintains modular code organization without build process
 
 **Calculation system:**
 - Laser database with power/instability/resistance multipliers
-- Combined power = additive (sum of lasers)
+- Combined power = additive (sum of lasers with module multipliers)
 - Modifiers = multiplicative (diminishing returns)
-- Max mass formula: `(baseMass * combinedPower * baseResistance) / (effectiveResistance + 0.01)`
-- Reference values: 3000kg @ resistance 0.25, capped at 15000kg
+- Max mass formula: Realistic formula based on Star Citizen 4.x community data
+- Reference: 1 Arbor (1850 power) can fracture ~8000kg at 0% resistance, capped at 50000kg
 
 ## Current Status vs Future Goals
 
@@ -58,7 +67,7 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 ## Reference Data
 
-**Available lasers** (`laserData` object in `public/script.js`):
+**Available lasers** (`laserData` object in `public/js/data.js`):
 ```javascript
 {
   arbor: { power: 1850, instability: 1.0, resistance: 1.0, moduleSlots: 3 },      // Default rental

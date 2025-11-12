@@ -1,75 +1,22 @@
-// Laser data based on Star Citizen 4.x specifications
-// Power values are extraction power from game data
-const laserData = {
-    'arbor': {
-        power: 1850,
-        instability: 1.0,
-        resistance: 1.0,
-        moduleSlots: 3,
-        name: 'Arbor (default)',
-        description: 'Standard rental laser - balanced but limited power'
-    },
-    'hofstede': {
-        power: 1295,
-        instability: 0.5,
-        resistance: 0.7,  // -30% resistance bonus
-        moduleSlots: 3,
-        name: 'Hofstede S1',
-        description: 'Lower power but excellent resistance reduction'
-    },
-    'helix': {
-        power: 1850,
-        instability: 0.6,  // -40% inert materials
-        resistance: 0.7,   // -30% resistance bonus
-        moduleSlots: 3,
-        name: 'Helix I',
-        description: 'Same extraction power as Arbor but better modifiers'
-    },
-    'lancet': {
-        power: 1850,
-        instability: 0.7,
-        resistance: 1.0,
-        moduleSlots: 3,
-        name: 'Lancet MH1',
-        description: 'Support laser - reduces instability for team mining'
-    }
-};
+// UI state and DOM manipulation
 
-// Mining modules data
-// Power multipliers: <1.0 = reduces extraction power, >1.0 = increases power
-// Note: Charge window and charge rate benefits are not modeled in mass calculations
-// (they only affect gameplay, not fracture capacity)
-const moduleData = {
-    'none': { power: 1.0, name: '(None)', description: 'No module' },
-    // Greycat Industrial - Reduce power for wider optimal charge window (easier to use)
-    'fltr': { power: 0.85, name: 'FLTR', description: '-15% power (easier green zone)' },
-    'fltr-l': { power: 0.90, name: 'FLTR-L', description: '-10% power (easier green zone)' },
-    'fltr-xl': { power: 0.95, name: 'FLTR-XL', description: '-5% power (easier green zone)' },
-    'xtr': { power: 0.85, name: 'XTR', description: '-15% power, +15% optimal window' },
-    'xtr-l': { power: 0.90, name: 'XTR-L', description: '-10% power, +22% optimal window' },
-    'xtr-xl': { power: 0.95, name: 'XTR-XL', description: '-5% power, +25% optimal window' },
-    // Thermyte Concern - Reduce power for faster charge (quicker fracturing)
-    'focus': { power: 0.85, name: 'Focus', description: '-15% power, +30% charge speed' },
-    'focus-ii': { power: 0.90, name: 'Focus II', description: '-10% power, +37% charge speed' },
-    'focus-iii': { power: 0.95, name: 'Focus III', description: '-5% power, +40% charge speed' },
-    // Shubin Interstellar - Pure power boost (harder rocks, but harder to control)
-    'rieger': { power: 1.15, name: 'Rieger', description: '+15% power (harder to control)' },
-    'rieger-c2': { power: 1.20, name: 'Rieger-C2', description: '+20% power (harder to control)' },
-    'rieger-c3': { power: 1.25, name: 'Rieger-C3', description: '+25% power (harder to control)' },
-    'vaux': { power: 1.15, name: 'Vaux', description: '+15% power (extraction focus)' },
-    'vaux-c2': { power: 1.20, name: 'Vaux-C2', description: '+20% power (extraction focus)' },
-    'vaux-c3': { power: 1.25, name: 'Vaux-C3', description: '+25% power (extraction focus)' }
-};
-
+// UI State
 let shipCount = 1;
 let shipModules = {}; // Store modules for each ship: { 0: ['none', 'none', 'none'], 1: [...] }
 
+/**
+ * Add a new ship to the configuration
+ */
 function addShip() {
     shipCount++;
     updateShipsUI();
     updateTable();
 }
 
+/**
+ * Remove a ship from the configuration
+ * @param {number} index - Ship index to remove
+ */
 function removeShip(index) {
     if (shipCount > 1) {
         // Save current configuration before removing
@@ -105,7 +52,12 @@ function removeShip(index) {
     }
 }
 
+/**
+ * Update the ships configuration UI
+ * @param {Array|null} preservedConfig - Optional preserved laser configuration
+ */
 function updateShipsUI(preservedConfig = null) {
+    const laserData = window.FracturationParty.data.laserData;
     const container = document.getElementById('ships-container');
 
     // Save current configuration before rebuilding UI (if not provided)
@@ -142,7 +94,7 @@ function updateShipsUI(preservedConfig = null) {
             modulesHTML += `
                 <div class="module-slot">
                     <label>Module ${slot + 1}</label>
-                    <select id="module-${i}-${slot}" class="module-select" onchange="updateTable()">
+                    <select id="module-${i}-${slot}" class="module-select" onchange="FracturationParty.ui.updateTable()">
                         <option value="none">(None)</option>
                         <optgroup label="Greycat - Easier Control">
                             <option value="fltr">FLTR (-15% power, easier)</option>
@@ -173,11 +125,11 @@ function updateShipsUI(preservedConfig = null) {
         shipDiv.innerHTML = `
             <div class="ship-header">
                 <label>Prospector #${i + 1}</label>
-                ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
+                ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="FracturationParty.ui.removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
             </div>
             <div class="laser-select-container">
                 <label>Mining Head</label>
-                <select id="laser-${i}" onchange="onLaserChange(${i})">
+                <select id="laser-${i}" onchange="FracturationParty.ui.onLaserChange(${i})">
                     <option value="arbor">Arbor (default)</option>
                     <option value="hofstede">Hofstede S1 (Inst: -50%, Res: -30%)</option>
                     <option value="helix">Helix I (Inst: -40%, Res: -30%)</option>
@@ -208,7 +160,12 @@ function updateShipsUI(preservedConfig = null) {
     }
 }
 
+/**
+ * Handle laser change event - resets modules when laser changes
+ * @param {number} shipIndex - Index of the ship that changed
+ */
 function onLaserChange(shipIndex) {
+    const laserData = window.FracturationParty.data.laserData;
     // Reset modules when laser changes
     const laser = document.getElementById(`laser-${shipIndex}`).value;
     const moduleSlots = laserData[laser].moduleSlots;
@@ -217,7 +174,12 @@ function onLaserChange(shipIndex) {
     updateTable();
 }
 
+/**
+ * Get current ship configuration from the UI
+ * @returns {Array} Array of ship configurations {laser, modules}
+ */
 function getShipConfig() {
+    const laserData = window.FracturationParty.data.laserData;
     const config = [];
     for (let i = 0; i < shipCount; i++) {
         const laserSelect = document.getElementById(`laser-${i}`);
@@ -241,73 +203,11 @@ function getShipConfig() {
     return config;
 }
 
-function calculateCombinedPower(ships) {
-    // Power is additive - sum of all laser extraction powers (with module multipliers)
-    let totalPower = 0;
-    ships.forEach(ship => {
-        let laserPower = laserData[ship.laser].power;
-
-        // Apply module power multipliers (multiplicative)
-        let modulePowerMultiplier = 1.0;
-        ship.modules.forEach(moduleKey => {
-            if (moduleKey && moduleKey !== 'none') {
-                modulePowerMultiplier *= moduleData[moduleKey].power;
-            }
-        });
-
-        totalPower += laserPower * modulePowerMultiplier;
-    });
-    return totalPower;
-}
-
-function calculateCombinedModifiers(ships) {
-    // Modifiers multiply (diminishing returns)
-    let instabilityMod = 1.0;
-    let resistanceMod = 1.0;
-
-    ships.forEach(ship => {
-        instabilityMod *= laserData[ship.laser].instability;
-        resistanceMod *= laserData[ship.laser].resistance;
-    });
-
-    return { instability: instabilityMod, resistance: resistanceMod };
-}
-
-function calculateMaxMass(resistance, ships) {
-    const combinedPower = calculateCombinedPower(ships);
-    const modifiers = calculateCombinedModifiers(ships);
-
-    // New realistic formula based on Star Citizen 4.x community data
-    // Baseline: 1 Arbor (1850 power) can fracture ~8000kg at 0% resistance
-    const baselinePower = 1850;
-    const baselineMass = 8000;
-
-    // Apply resistance modifiers from lasers (e.g., Helix/Hofstede reduce effective resistance)
-    const effectiveResistance = resistance * modifiers.resistance;
-
-    // Power scaling: more lasers = proportionally more capacity
-    const powerMultiplier = combinedPower / baselinePower;
-
-    // Resistance impact: exponential curve (resistance has strong impact at high values)
-    // At 0% resistance: factor = 1.0
-    // At 50% resistance: factor ≈ 0.25
-    // At 80% resistance: factor ≈ 0.04
-    const resistanceFactor = Math.pow(1 - effectiveResistance, 2.5);
-
-    // Calculate max mass
-    let maxMass = baselineMass * powerMultiplier * resistanceFactor;
-
-    // Realistic cap: even with multiple ships, there's a practical limit
-    maxMass = Math.min(maxMass, 50000);
-
-    // Minimum threshold
-    maxMass = Math.max(maxMass, 100);
-
-    return Math.round(maxMass);
-}
-
-
+/**
+ * Update the capacity table based on current configuration
+ */
 function updateTable() {
+    const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
     const config = getShipConfig();
     const resistanceLevels = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80];
 
@@ -330,16 +230,10 @@ function updateTable() {
     document.getElementById('capacity-table').innerHTML = html;
 }
 
-// Attach functions to window for onclick handlers
-if (typeof window !== 'undefined') {
-    window.addShip = addShip;
-    window.removeShip = removeShip;
-    window.onLaserChange = onLaserChange;
-    window.updateTable = updateTable;
-}
-
-// Initialization function
-function initializeApp() {
+/**
+ * Initialize the UI
+ */
+function initializeUI() {
     if (document.getElementById('ships-container')) {
         // Initialize first ship modules
         shipModules[0] = ['none', 'none', 'none'];
@@ -348,21 +242,12 @@ function initializeApp() {
     }
 }
 
-// Wait for DOM to be fully loaded before initializing
-if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeApp);
-    } else {
-        // DOM already loaded, initialize immediately
-        initializeApp();
-    }
-}
-
-// Export functions for testing (ES6 exports)
-export {
-    laserData,
-    moduleData,
-    calculateCombinedPower,
-    calculateCombinedModifiers,
-    calculateMaxMass
+// Export to global namespace
+window.FracturationParty = window.FracturationParty || {};
+window.FracturationParty.ui = {
+    addShip,
+    removeShip,
+    onLaserChange,
+    updateTable,
+    initializeUI
 };

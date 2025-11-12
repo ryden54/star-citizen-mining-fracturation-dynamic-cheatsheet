@@ -102,7 +102,11 @@ Tests run automatically on GitHub Actions for every push and pull request to the
 ├── public/                 # Web assets
 │   ├── index.html         # Main HTML structure
 │   ├── style.css          # All styling
-│   └── script.js          # Application logic
+│   └── js/                # Modular JavaScript (dual-compatible for file:// URLs)
+│       ├── data.js        # Laser and module data
+│       ├── calculations.js # Mining calculations
+│       ├── ui.js          # UI state and DOM manipulation
+│       └── app.js         # Initialization and test exports
 ├── tests/
 │   ├── calculations.test.js   # Unit tests
 │   └── app.e2e.js             # E2E tests
@@ -112,7 +116,7 @@ Tests run automatically on GitHub Actions for every push and pull request to the
 ├── .github/
 │   └── workflows/
 │       └── test.yml        # GitHub Actions workflow
-├── CLAUDE.md               # Developer guidance
+├── AGENTS.md               # Developer guidance
 └── README.md               # This file
 ```
 
