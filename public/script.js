@@ -306,59 +306,6 @@ function calculateMaxMass(resistance, ships) {
     return Math.round(maxMass);
 }
 
-function canMine(mass, resistance, ships) {
-    const maxMass = calculateMaxMass(resistance, ships);
-
-    if (mass > maxMass * 1.2) {
-        return { possible: false, difficulty: 'impossible', color: 'cannot-mine' };
-    } else if (mass > maxMass) {
-        return { possible: true, difficulty: 'very difficult', color: 'difficult' };
-    } else if (mass > maxMass * 0.8) {
-        return { possible: true, difficulty: 'difficult', color: 'difficult' };
-    } else {
-        return { possible: true, difficulty: 'easy', color: 'can-mine' };
-    }
-}
-
-function checkRock() {
-    const mass = parseFloat(document.getElementById('rock-mass').value);
-    const resistance = parseFloat(document.getElementById('rock-resistance').value) / 100; // Convert % to float
-    const instability = parseFloat(document.getElementById('rock-instability').value) / 100; // Convert % to float
-
-    const config = getShipConfig();
-    const result = canMine(mass, resistance, config);
-    const modifiers = calculateCombinedModifiers(config);
-    const effectiveInstability = instability * modifiers.instability;
-
-    const resultDiv = document.getElementById('result');
-    resultDiv.style.display = 'block';
-
-    let html = `<h3>Analysis Result</h3>`;
-
-    if (!result.possible) {
-        html += `<p class="cannot-mine" style="font-size: 24px;">❌ CANNOT BE FRACTURED (impossible)</p>`;
-        html += `<p>Your configuration doesn't have enough power for this rock.</p>`;
-        html += `<p><strong>Solution:</strong> Upgrade your lasers or add an additional miner.</p>`;
-    } else {
-        html += `<p class="${result.color}" style="font-size: 24px;">✅ CAN BE FRACTURED (${result.difficulty})</p>`;
-
-        if (result.difficulty === 'easy') {
-            html += `<p>✨ This rock should be easy to fracture with your configuration.</p>`;
-        } else {
-            html += `<p>⚠️ This rock will be challenging. Narrow green zone, be careful!</p>`;
-        }
-
-        html += `<p><strong>Effective instability:</strong> ${(effectiveInstability * 100).toFixed(0)}% (original: ${(instability * 100).toFixed(0)}%)</p>`;
-
-        if (effectiveInstability > 2.0) {
-            html += `<p class="difficult">⚠️ High instability! Precise control required.</p>`;
-        } else if (effectiveInstability < 1.0) {
-            html += `<p class="can-mine">✅ Instability well managed by your lasers.</p>`;
-        }
-    }
-
-    resultDiv.innerHTML = html;
-}
 
 function updateTable() {
     const config = getShipConfig();
@@ -389,7 +336,6 @@ if (typeof window !== 'undefined') {
     window.removeShip = removeShip;
     window.onLaserChange = onLaserChange;
     window.updateTable = updateTable;
-    window.checkRock = checkRock;
 }
 
 // Initialization function
@@ -418,6 +364,5 @@ export {
     moduleData,
     calculateCombinedPower,
     calculateCombinedModifiers,
-    calculateMaxMass,
-    canMine
+    calculateMaxMass
 };
