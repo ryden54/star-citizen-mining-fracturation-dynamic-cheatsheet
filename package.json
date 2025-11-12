@@ -13,21 +13,16 @@
     "test:e2e:headed": "playwright test --headed",
     "playwright:install": "playwright install --with-deps",
     "coverage:clean": "rimraf coverage coverage-v8 coverage-e2e .nyc_output coverage.json",
-    "coverage:merge": "node scripts/coverage-merge.js",
-    "coverage:upload": "codecov",
-    "coverage": "npm run coverage:clean && npm run test:unit && npm run test:e2e:coverage && npm run coverage:merge"
+    "coverage": "npm run coverage:clean && npm run test:unit && npm run test:e2e:coverage"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
     "@vitest/coverage-istanbul": "^4.0.8",
     "@vitest/ui": "^4.0.8",
-    "codecov": "^3.8.2",
     "glob": "^11.0.3",
     "happy-dom": "^20.0.10",
     "http-server": "^14.1.1",
-    "lcov-result-merger": "^5.0.1",
     "monocart-coverage-reports": "^2.12.9",
-    "nyc": "^17.1.0",
     "rimraf": "^6.1.0",
     "vitest": "^4.0.8"
   }
