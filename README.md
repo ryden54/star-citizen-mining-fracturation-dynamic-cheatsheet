@@ -31,10 +31,10 @@ This project uses a modern testing stack with **Vitest** (unit tests) and **Play
 ### Prerequisites
 
 ```bash
-# Install dependencies
+# Install dependencies (for testing only - not needed to run the app)
 npm install
 
-# Install Playwright browsers (first time only)
+# Install Playwright browsers (first time only, for E2E tests)
 npm run playwright:install
 ```
 
@@ -90,10 +90,10 @@ tests/
 Tests run automatically on GitHub Actions for every push and pull request to the `main` branch. The workflow:
 
 1. Installs dependencies
-2. Runs unit tests
+2. Runs unit tests with coverage
 3. Installs Playwright browsers
-4. Runs E2E tests across Chromium, Firefox, and WebKit
-5. Uploads test reports as artifacts
+4. Runs E2E tests across Chromium, Firefox, and WebKit (using file:// URLs - no HTTP server needed)
+5. Uploads coverage to Codecov and test reports as artifacts
 
 ## Project Structure
 
