@@ -5,9 +5,9 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      include: ['script.js'],
+      provider: 'istanbul',
+      reporter: ['text', 'text-summary', 'json', 'html', 'lcov'],
+      include: ['public/script.js'],
     },
   },
 });
