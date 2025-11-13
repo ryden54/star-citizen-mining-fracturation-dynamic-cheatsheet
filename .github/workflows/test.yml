@@ -20,8 +20,21 @@ jobs:
       with:
         node-version: 20
 
+    - name: Cache node modules
+      id: cache-npm
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+
     - name: Install dependencies
+      if: steps.cache-npm.outputs.cache-hit != 'true'
       run: npm ci
+
+    - name: Create reports directory
+      run: mkdir -p reports
 
     - name: Run unit tests with coverage
       run: npm run test:unit
@@ -35,6 +48,13 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage-unit/lcov.info,coverage-e2e/lcov.info
         fail_ci_if_error: false
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: reports/vitest-report.xml,reports/playwright-report.xml
 
     - uses: actions/upload-artifact@v4
       if: always()

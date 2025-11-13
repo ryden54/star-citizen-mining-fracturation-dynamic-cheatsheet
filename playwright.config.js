@@ -8,7 +8,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
-    ? [['github'], ['html', { open: 'never' }]]
+    ? [['github'], ['html', { open: 'never' }], ['junit', { outputFile: 'reports/playwright-report.xml' }]]
     : [['list'], ['html', { open: 'never' }]],
   use: {
     trace: 'on-first-retry',

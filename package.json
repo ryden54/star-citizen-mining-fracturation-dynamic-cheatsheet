@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "vitest run --coverage",
+    "test:unit": "vitest run --coverage --reporter=junit --outputFile.junit=reports/vitest-report.xml",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:coverage": "npm run test:e2e && node scripts/coverage-e2e.js",

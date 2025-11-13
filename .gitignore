@@ -4,9 +4,9 @@ node_modules/
 # Test artifacts
 playwright-report/
 test-results/
-coverage-unit/      # Unit test coverage (Vitest/Istanbul)
-coverage-v8/        # E2E raw coverage data (Playwright V8 API - temporary)
-coverage-e2e/       # E2E coverage reports (monocart transforms coverage-v8)
+coverage-unit/
+coverage-v8/
+coverage-e2e/
 .nyc_output/
 coverage.json
 
