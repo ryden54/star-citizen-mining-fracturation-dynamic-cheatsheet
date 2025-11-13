@@ -7,7 +7,8 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul',
       reporter: ['text', 'text-summary', 'json', 'html', 'lcov'],
-      include: ['public/script.js'],
+      reportsDirectory: './coverage-unit',
+      include: ['public/js/**/*.js'],
     },
   },
 });

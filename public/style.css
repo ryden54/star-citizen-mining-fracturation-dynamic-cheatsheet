@@ -29,12 +29,41 @@ h1 {
     font-size: 0.9em;
 }
 
+/* Main layout: 2 columns on desktop, stacked on mobile */
+.main-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Desktop layout: 40% form / 60% table */
+@media (min-width: 768px) {
+    .main-layout {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .form-column {
+        flex: 0 0 40%;
+    }
+
+    .table-column {
+        flex: 0 0 60%;
+    }
+}
+
 .config-section {
     background: rgba(20, 20, 35, 0.6);
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
     border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+/* Remove bottom margin from last config-section in columns */
+.form-column .config-section:last-child,
+.table-column .config-section:last-child {
+    margin-bottom: 0;
 }
 
 h2 {
@@ -79,6 +108,47 @@ h2 {
     background: rgba(255, 68, 68, 1);
     transform: scale(1.1);
     box-shadow: 0 3px 10px rgba(255, 68, 68, 0.5);
+}
+
+.ship-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.ship-header label {
+    margin-bottom: 0;
+    font-size: 1.1em;
+    color: #00d4ff;
+}
+
+.laser-select-container {
+    margin-bottom: 15px;
+}
+
+.modules-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.module-slot {
+    display: flex;
+    flex-direction: column;
+}
+
+.module-slot label {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.module-select {
+    font-size: 0.9em;
 }
 
 label {

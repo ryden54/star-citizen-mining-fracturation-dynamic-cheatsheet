@@ -24,7 +24,11 @@ export const test = base.extend({
         const jsCoverage = await page.coverage.stopJSCoverage();
 
         const coverageData = jsCoverage.filter(entry => {
-            return entry.url.includes('script.js');
+            // Capture all JS files in public/js/ folder (data.js, calculations.js, ui.js)
+            return entry.url.includes('/js/') &&
+                   (entry.url.includes('data.js') ||
+                    entry.url.includes('calculations.js') ||
+                    entry.url.includes('ui.js'));
         });
 
         if (coverageData.length > 0) {

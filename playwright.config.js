@@ -11,7 +11,6 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }]]
     : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'file://' + process.cwd(),
     trace: 'on-first-retry',
   },
 

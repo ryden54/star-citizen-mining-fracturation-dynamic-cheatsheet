@@ -3,11 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const indexPath = 'file://' + path.resolve(__dirname, '..', 'public', 'index.html');
+const indexPath = path.join(__dirname, '..', 'public', 'index.html');
+const fileUrl = `file://${indexPath.replace(/\\/g, '/')}`;
 
 test.describe('Star Citizen Mining Calculator', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto(indexPath);
+        await page.goto(fileUrl);
     });
 
     test('should load the page with correct title', async ({ page }) => {
@@ -18,7 +19,7 @@ test.describe('Star Citizen Mining Calculator', () => {
     test('should display initial configuration with one Prospector', async ({ page }) => {
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(1);
-        await expect(shipItems.first().locator('label')).toContainText('Prospector #1');
+        await expect(shipItems.first().locator('.ship-header label')).toContainText('Prospector #1');
     });
 
     test('should add a Prospector when clicking add button', async ({ page }) => {
@@ -26,7 +27,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(2);
-        await expect(page.locator('label').nth(1)).toContainText('Prospector #2');
+        await expect(shipItems.nth(1).locator('.ship-header label')).toContainText('Prospector #2');
     });
 
     test('should remove a Prospector when clicking individual remove button', async ({ page }) => {
