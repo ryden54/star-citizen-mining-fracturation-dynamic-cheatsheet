@@ -140,30 +140,7 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         for (let slot = 0; slot < moduleSlots; slot++) {
             const moduleKey = shipModules[i]?.[slot] || 'none';
             const module = moduleData[moduleKey];
-            let moduleDescriptionHTML = '';
-            if (module && moduleKey !== 'none') {
-                const moduleStats = [];
-                // Fracturing Power
-                const powerVar = (module.fracturingPowerModifier - 1.0) * 100;
-                if (powerVar !== 0) {
-                    const pwrColor = powerVar > 0 ? 'green' : 'red';
-                    moduleStats.push(`Fract. Pwr: <span style="color:${pwrColor};">${powerVar > 0 ? '+' : ''}${powerVar.toFixed(0)}%</span>`);
-                }
-                // Extraction Power
-                const extractVar = (module.extractionPowerModifier - 1.0) * 100;
-                if (extractVar !== 0) {
-                    const extColor = extractVar > 0 ? 'green' : 'red';
-                    moduleStats.push(`Extract Pwr: <span style="color:${extColor};">${extractVar > 0 ? '+' : ''}${extractVar.toFixed(0)}%</span>`);
-                }
-                // Other effects
-                module.effects.forEach(effect => {
-                    let effectColor = '#bbb';
-                    if (effect.type === 'pro') effectColor = 'green';
-                    if (effect.type === 'con') effectColor = 'red';
-                    moduleStats.push(`<span style="color:${effectColor};">${effect.text}</span>`);
-                });
-                moduleDescriptionHTML = moduleStats.join(', ');
-            }
+            const moduleDescriptionHTML = generateModuleDescriptionHTML(module);
 
             modulesHTML += `
                 <div class="module-slot">
@@ -257,6 +234,43 @@ function onModuleChange(shipIndex, slotIndex, focusedId = null) {
     updateTable();
 }
 
+/**
+ * Generates the HTML for a module's description.
+ * @param {object} module - The module object from moduleData.
+ * @returns {string} The generated HTML string.
+ */
+function generateModuleDescriptionHTML(module) {
+    if (!module || module.name === '(None)') {
+        return '';
+    }
+
+    const moduleStats = [];
+    // Fracturing Power
+    const powerVar = (module.fracturingPowerModifier - 1.0) * 100;
+    if (powerVar !== 0) {
+        const pwrColor = powerVar > 0 ? 'green' : 'red';
+        moduleStats.push(`Fract. Pwr: <span style="color:${pwrColor};">${powerVar > 0 ? '+' : ''}${powerVar.toFixed(0)}%</span>`);
+    }
+    // Extraction Power
+    const extractVar = (module.extractionPowerModifier - 1.0) * 100;
+    if (extractVar !== 0) {
+        const extColor = extractVar > 0 ? 'green' : 'red';
+        moduleStats.push(`Extract Pwr: <span style="color:${extColor};">${extractVar > 0 ? '+' : ''}${extractVar.toFixed(0)}%</span>`);
+    }
+    // Other effects
+    module.effects.forEach(effect => {
+        let effectColor = '#bbb';
+        if (effect.type === 'pro') effectColor = 'green';
+        if (effect.type === 'con') effectColor = 'red';
+        moduleStats.push(`<span style="color:${effectColor};">${effect.text}</span>`);
+    });
+    return moduleStats.join(', ');
+}
+
+/**
+ * Get current ship configuration from the UI
+ * @returns {Array} Array of ship configurations {laser, modules}
+ */
 function getShipConfig() {
     const config = [];
     for (let i = 0; i < shipCount; i++) {
@@ -268,6 +282,9 @@ function getShipConfig() {
     return config;
 }
 
+/**
+ * Update the capacity table based on current configuration
+ */
 function updateTable() {
     const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
     const config = getShipConfig();
@@ -285,6 +302,9 @@ function updateTable() {
     document.getElementById('capacity-table').innerHTML = html;
 }
 
+/**
+ * Initialize the UI
+ */
 function initializeUI() {
     if (document.getElementById('ships-container')) {
         shipModules[0] = ['none', 'none', 'none'];
@@ -300,6 +320,7 @@ window.FracturationParty.ui = {
     removeShip,
     onLaserChange,
     onModuleChange,
+    generateModuleDescriptionHTML,
     updateTable,
     initializeUI
 };

@@ -14,3 +14,6 @@ export const moduleData = window.FracturationParty.data.moduleData;
 export const calculateCombinedPower = window.FracturationParty.calculations.calculateCombinedPower;
 export const calculateCombinedModifiers = window.FracturationParty.calculations.calculateCombinedModifiers;
 export const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
+
+// UI functions
+export const generateModuleDescriptionHTML = window.FracturationParty.ui.generateModuleDescriptionHTML;

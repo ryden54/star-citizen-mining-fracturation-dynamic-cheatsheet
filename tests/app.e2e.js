@@ -183,4 +183,28 @@ test.describe('Star Citizen Mining Calculator', () => {
         // Double ship should have higher capacity
         expect(doubleShipMass).toBeGreaterThan(singleShipMass);
     });
+
+    test('should update module description on change', async ({ page }) => {
+        const moduleSelect = page.locator('#module-0-0');
+        await moduleSelect.selectOption('rieger');
+
+        // Get moduleData from the page's context to make the test dynamic
+        const moduleData = await page.evaluate(() => window.FracturationParty.data.moduleData);
+        const riegerModule = moduleData.rieger;
+
+        // Dynamically generate the expected HTML
+        const powerVar = (riegerModule.fracturingPowerModifier - 1.0) * 100;
+        const pwrColor = powerVar > 0 ? 'green' : 'red';
+        const expectedPwrHtml = `Fract. Pwr: <span style="color:${pwrColor};">${powerVar > 0 ? '+' : ''}${powerVar.toFixed(0)}%</span>`;
+
+        const effect = riegerModule.effects[0];
+        const effectColor = effect.type === 'con' ? 'red' : 'green';
+        const expectedEffectHtml = `<span style="color:${effectColor};">${effect.text}</span>`;
+
+        const descriptionDiv = page.locator('#module-0-0 + .module-description');
+        const innerHTML = await descriptionDiv.innerHTML();
+
+        expect(innerHTML).toContain(expectedPwrHtml);
+        expect(innerHTML).toContain(expectedEffectHtml);
+    });
 });
