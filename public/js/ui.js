@@ -19,7 +19,6 @@ function addShip() {
  */
 function removeShip(index) {
     if (shipCount > 1) {
-        // Save current configuration before removing
         const currentConfig = [];
         for (let i = 0; i < shipCount; i++) {
             const laserSelect = document.getElementById(`laser-${i}`);
@@ -27,11 +26,8 @@ function removeShip(index) {
                 currentConfig.push(laserSelect.value);
             }
         }
-
-        // Remove the ship at the specified index
         currentConfig.splice(index, 1);
 
-        // Remove modules for this ship and reindex
         delete shipModules[index];
         const newModules = {};
         Object.keys(shipModules).forEach(key => {
@@ -45,8 +41,6 @@ function removeShip(index) {
         shipModules = newModules;
 
         shipCount--;
-
-        // Update UI with the modified configuration
         updateShipsUI(currentConfig);
         updateTable();
     }
@@ -55,25 +49,61 @@ function removeShip(index) {
 /**
  * Update the ships configuration UI
  * @param {Array|null} preservedConfig - Optional preserved laser configuration
+ * @param {string|null} focusedElementId - Optional ID of the element to re-focus after update
  */
-function updateShipsUI(preservedConfig = null) {
-    const laserData = window.FracturationParty.data.laserData;
+function updateShipsUI(preservedConfig = null, focusedElementId = null) {
+    const { laserData, moduleData } = window.FracturationParty.data;
     const container = document.getElementById('ships-container');
 
-    // Save current configuration before rebuilding UI (if not provided)
+    // --- Pre-generate dynamic dropdown options ---
+    let laserOptionsHTML = '';
+    const arborFracturingPower = laserData['arbor'].fracturingPower;
+    for (const laserKey in laserData) {
+        const laser = laserData[laserKey];
+        const descriptionParts = [];
+        if (laserKey !== 'arbor') {
+            const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
+            descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+        }
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+        }
+        if (laser.resistance !== 1.0) {
+            const resVar = (laser.resistance - 1.0) * 100;
+            descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+        }
+        let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
+        laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
+    }
+
+    const modulesByManufacturer = {};
+    for (const key in moduleData) {
+        if (key === 'none') continue;
+        const module = moduleData[key];
+        if (!modulesByManufacturer[module.manufacturer]) {
+            modulesByManufacturer[module.manufacturer] = [];
+        }
+        modulesByManufacturer[module.manufacturer].push({ key, ...module });
+    }
+    let moduleOptionsHTML = '<option value="none">(None)</option>';
+    for (const manufacturer in modulesByManufacturer) {
+        moduleOptionsHTML += `<optgroup label="${manufacturer}">`;
+        modulesByManufacturer[manufacturer].forEach(module => {
+            moduleOptionsHTML += `<option value="${module.key}">${module.name}</option>`;
+        });
+        moduleOptionsHTML += `</optgroup>`;
+    }
+
+    // --- Save current config and rebuild UI ---
     const currentConfig = preservedConfig || [];
     if (!preservedConfig) {
         for (let i = 0; i < shipCount; i++) {
             const laserSelect = document.getElementById(`laser-${i}`);
-            if (laserSelect) {
-                currentConfig.push(laserSelect.value);
-            } else {
-                currentConfig.push('arbor'); // Default for new ships
-            }
-
-            // Save module configuration
+            currentConfig.push(laserSelect ? laserSelect.value : 'arbor');
             if (!shipModules[i]) {
-                shipModules[i] = ['none', 'none', 'none'];
+                const laserKey = currentConfig[i] || 'arbor';
+                shipModules[i] = Array(laserData[laserKey].moduleSlots).fill('none');
             }
         }
     }
@@ -84,40 +114,64 @@ function updateShipsUI(preservedConfig = null) {
         const shipDiv = document.createElement('div');
         shipDiv.className = 'ship-item';
 
-        // Get the number of module slots for this laser
-        const laser = currentConfig[i] || 'arbor';
-        const moduleSlots = laserData[laser].moduleSlots;
+        const laserKey = currentConfig[i] || 'arbor';
+        const laser = laserData[laserKey];
+        const moduleSlots = laser.moduleSlots;
 
-        // Generate module select dropdowns
+        const statsParts = [];
+        if (laserKey !== 'arbor') {
+            const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
+            const pwrColor = variation > 0 ? 'green' : 'red';
+            statsParts.push(`Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
+        }
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            const instColor = instVar > 0 ? 'green' : 'red';
+            statsParts.push(`Opt. Window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+        }
+        if (laser.resistance !== 1.0) {
+            const resVar = (laser.resistance - 1.0) * 100;
+            const resColor = resVar < 0 ? 'green' : 'red';
+            statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
+        }
+        const statsHTML = statsParts.join(', ');
+
         let modulesHTML = '';
         for (let slot = 0; slot < moduleSlots; slot++) {
+            const moduleKey = shipModules[i]?.[slot] || 'none';
+            const module = moduleData[moduleKey];
+            let moduleDescriptionHTML = '';
+            if (module && moduleKey !== 'none') {
+                const moduleStats = [];
+                // Fracturing Power
+                const powerVar = (module.fracturingPowerModifier - 1.0) * 100;
+                if (powerVar !== 0) {
+                    const pwrColor = powerVar > 0 ? 'green' : 'red';
+                    moduleStats.push(`Fract. Pwr: <span style="color:${pwrColor};">${powerVar > 0 ? '+' : ''}${powerVar.toFixed(0)}%</span>`);
+                }
+                // Extraction Power
+                const extractVar = (module.extractionPowerModifier - 1.0) * 100;
+                if (extractVar !== 0) {
+                    const extColor = extractVar > 0 ? 'green' : 'red';
+                    moduleStats.push(`Extract Pwr: <span style="color:${extColor};">${extractVar > 0 ? '+' : ''}${extractVar.toFixed(0)}%</span>`);
+                }
+                // Other effects
+                module.effects.forEach(effect => {
+                    let effectColor = '#bbb';
+                    if (effect.type === 'pro') effectColor = 'green';
+                    if (effect.type === 'con') effectColor = 'red';
+                    moduleStats.push(`<span style="color:${effectColor};">${effect.text}</span>`);
+                });
+                moduleDescriptionHTML = moduleStats.join(', ');
+            }
+
             modulesHTML += `
                 <div class="module-slot">
                     <label>Module ${slot + 1}</label>
-                    <select id="module-${i}-${slot}" class="module-select" onchange="FracturationParty.ui.updateTable()">
-                        <option value="none">(None)</option>
-                        <optgroup label="Greycat - Easier Control">
-                            <option value="fltr">FLTR (-15% power, easier)</option>
-                            <option value="fltr-l">FLTR-L (-10% power, easier)</option>
-                            <option value="fltr-xl">FLTR-XL (-5% power, easier)</option>
-                            <option value="xtr">XTR (-15% power, +15% window)</option>
-                            <option value="xtr-l">XTR-L (-10% power, +22% window)</option>
-                            <option value="xtr-xl">XTR-XL (-5% power, +25% window)</option>
-                        </optgroup>
-                        <optgroup label="Thermyte - Faster Charge">
-                            <option value="focus">Focus (-15% power, +30% speed)</option>
-                            <option value="focus-ii">Focus II (-10% power, +37% speed)</option>
-                            <option value="focus-iii">Focus III (-5% power, +40% speed)</option>
-                        </optgroup>
-                        <optgroup label="Shubin - More Power">
-                            <option value="rieger">Rieger (+15% power)</option>
-                            <option value="rieger-c2">Rieger-C2 (+20% power)</option>
-                            <option value="rieger-c3">Rieger-C3 (+25% power)</option>
-                            <option value="vaux">Vaux (+15% power)</option>
-                            <option value="vaux-c2">Vaux-C2 (+20% power)</option>
-                            <option value="vaux-c3">Vaux-C3 (+25% power)</option>
-                        </optgroup>
+                    <select id="module-${i}-${slot}" class="module-select" onchange="FracturationParty.ui.onModuleChange(${i}, ${slot})">
+                        ${moduleOptionsHTML}
                     </select>
+                    <div class="module-description">${moduleDescriptionHTML}</div>
                 </div>
             `;
         }
@@ -130,11 +184,12 @@ function updateShipsUI(preservedConfig = null) {
             <div class="laser-select-container">
                 <label>Mining Head</label>
                 <select id="laser-${i}" onchange="FracturationParty.ui.onLaserChange(${i})">
-                    <option value="arbor">Arbor (default)</option>
-                    <option value="hofstede">Hofstede S1 (Inst: -50%, Res: -30%)</option>
-                    <option value="helix">Helix I (Inst: -40%, Res: -30%)</option>
-                    <option value="lancet">Lancet MH1 (Inst: -30%)</option>
+                    ${laserOptionsHTML}
                 </select>
+            </div>
+            <div class="laser-description">
+                <div class="laser-stats">${statsHTML}</div>
+                <div class="laser-text">${laser.description}</div>
             </div>
             <div class="modules-container">
                 ${modulesHTML}
@@ -142,13 +197,7 @@ function updateShipsUI(preservedConfig = null) {
         `;
         container.appendChild(shipDiv);
 
-        // Restore previous laser selection
-        const laserSelect = document.getElementById(`laser-${i}`);
-        if (currentConfig[i]) {
-            laserSelect.value = currentConfig[i];
-        }
-
-        // Restore previous module selections
+        document.getElementById(`laser-${i}`).value = laserKey;
         if (shipModules[i]) {
             for (let slot = 0; slot < moduleSlots; slot++) {
                 const moduleSelect = document.getElementById(`module-${i}-${slot}`);
@@ -158,84 +207,86 @@ function updateShipsUI(preservedConfig = null) {
             }
         }
     }
+
+    // Restore focus if an element ID was provided
+    if (focusedElementId) {
+        const elementToFocus = document.getElementById(focusedElementId);
+        if (elementToFocus) {
+            elementToFocus.focus();
+        }
+    }
 }
 
 /**
  * Handle laser change event - resets modules when laser changes
  * @param {number} shipIndex - Index of the ship that changed
+ * @param {string|null} focusedId - ID of the element to re-focus
  */
-function onLaserChange(shipIndex) {
+function onLaserChange(shipIndex, focusedId = null) {
     const laserData = window.FracturationParty.data.laserData;
-    // Reset modules when laser changes
-    const laser = document.getElementById(`laser-${shipIndex}`).value;
+    const laserSelect = document.getElementById(`laser-${shipIndex}`);
+    focusedId = focusedId || laserSelect.id; // Use current element's ID if not provided
+
+    const laser = laserSelect.value;
     const moduleSlots = laserData[laser].moduleSlots;
     shipModules[shipIndex] = Array(moduleSlots).fill('none');
-    updateShipsUI();
+
+    updateShipsUI(null, focusedId);
     updateTable();
 }
 
 /**
- * Get current ship configuration from the UI
- * @returns {Array} Array of ship configurations {laser, modules}
+ * Handle module change event
+ * @param {number} shipIndex - Index of the ship that changed
+ * @param {number} slotIndex - Index of the module slot that changed
+ * @param {string|null} focusedId - ID of the element to re-focus
  */
+function onModuleChange(shipIndex, slotIndex, focusedId = null) {
+    const moduleSelect = document.getElementById(`module-${shipIndex}-${slotIndex}`);
+    focusedId = focusedId || moduleSelect.id; // Use current element's ID if not provided
+
+    if (moduleSelect) {
+        if (!shipModules[shipIndex]) {
+            const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
+            const moduleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
+            shipModules[shipIndex] = Array(moduleSlots).fill('none');
+        }
+        shipModules[shipIndex][slotIndex] = moduleSelect.value;
+    }
+    updateShipsUI(null, focusedId);
+    updateTable();
+}
+
 function getShipConfig() {
-    const laserData = window.FracturationParty.data.laserData;
     const config = [];
     for (let i = 0; i < shipCount; i++) {
         const laserSelect = document.getElementById(`laser-${i}`);
         const laser = laserSelect.value;
-
-        // Get modules for this ship
-        const modules = [];
-        const moduleSlots = laserData[laser].moduleSlots;
-        for (let slot = 0; slot < moduleSlots; slot++) {
-            const moduleSelect = document.getElementById(`module-${i}-${slot}`);
-            if (moduleSelect) {
-                modules.push(moduleSelect.value);
-                // Save to global state
-                if (!shipModules[i]) shipModules[i] = [];
-                shipModules[i][slot] = moduleSelect.value;
-            }
-        }
-
+        const modules = shipModules[i] || [];
         config.push({ laser, modules });
     }
     return config;
 }
 
-/**
- * Update the capacity table based on current configuration
- */
 function updateTable() {
     const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
     const config = getShipConfig();
     const resistanceLevels = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80];
 
     let html = '<table>';
-    html += '<tr><th>Resistance</th>';
-
-    html += `<th>Maximum mass for joined fracturation</th>`;
-    html += '</tr>';
+    html += '<tr><th>Resistance</th><th>Maximum mass for joined fracturation</th></tr>';
 
     resistanceLevels.forEach(resistance => {
         const maxMass = calculateMaxMass(resistance, config);
-
-        html += '<tr>';
-        html += `<td><strong>${(resistance * 100).toFixed(0)}%</strong></td>`;
-        html += `<td>${maxMass > 0 ? maxMass.toLocaleString() : 'N/A'} kg</td>`;
-        html += '</tr>';
+        html += `<tr><td><strong>${(resistance * 100).toFixed(0)}%</strong></td><td>${maxMass > 0 ? maxMass.toLocaleString() : 'N/A'} kg</td></tr>`;
     });
 
     html += '</table>';
     document.getElementById('capacity-table').innerHTML = html;
 }
 
-/**
- * Initialize the UI
- */
 function initializeUI() {
     if (document.getElementById('ships-container')) {
-        // Initialize first ship modules
         shipModules[0] = ['none', 'none', 'none'];
         updateShipsUI();
         updateTable();
@@ -248,6 +299,7 @@ window.FracturationParty.ui = {
     addShip,
     removeShip,
     onLaserChange,
+    onModuleChange,
     updateTable,
     initializeUI
 };

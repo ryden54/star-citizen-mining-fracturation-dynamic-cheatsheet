@@ -10,13 +10,13 @@ function calculateCombinedPower(ships) {
     // Power is additive - sum of all laser extraction powers (with module multipliers)
     let totalPower = 0;
     ships.forEach(ship => {
-        let laserPower = laserData[ship.laser].power;
+        let laserPower = laserData[ship.laser].fracturingPower;
 
         // Apply module power multipliers (multiplicative)
         let modulePowerMultiplier = 1.0;
         ship.modules.forEach(moduleKey => {
             if (moduleKey && moduleKey !== 'none') {
-                modulePowerMultiplier *= moduleData[moduleKey].power;
+                modulePowerMultiplier *= moduleData[moduleKey].fracturingPowerModifier;
             }
         });
 
@@ -55,8 +55,8 @@ function calculateMaxMass(resistance, ships) {
     const modifiers = calculateCombinedModifiers(ships);
 
     // New realistic formula based on Star Citizen 4.x community data
-    // Baseline: 1 Arbor (1850 power) can fracture ~8000kg at 0% resistance
-    const baselinePower = 1850;
+    // Baseline: 1 Arbor (1890 fracturing power) can fracture ~8000kg at 0% resistance
+    const baselinePower = 1890;
     const baselineMass = 8000;
 
     // Apply resistance modifiers from lasers (e.g., Helix/Hofstede reduce effective resistance)

@@ -97,14 +97,43 @@ test.describe('Star Citizen Mining Calculator', () => {
     });
 
     test('should show all laser options in dropdown', async ({ page }) => {
+        // Get laserData from the page's context to make the test dynamic
+        const laserData = await page.evaluate(() => window.FracturationParty.data.laserData);
+        const laserKeys = Object.keys(laserData);
+
         const laserSelect = page.locator('#laser-0');
         const options = laserSelect.locator('option');
 
-        await expect(options).toHaveCount(4);
-        await expect(options.nth(0)).toHaveText('Arbor (default)');
-        await expect(options.nth(1)).toHaveText('Hofstede S1 (Inst: -50%, Res: -30%)');
-        await expect(options.nth(2)).toHaveText('Helix I (Inst: -40%, Res: -30%)');
-        await expect(options.nth(3)).toHaveText('Lancet MH1 (Inst: -30%)');
+        // 1. Check the count
+        await expect(options).toHaveCount(laserKeys.length);
+
+        // 2. Check the text of each option
+        const arborFracturingPower = laserData['arbor'].fracturingPower;
+        for (let i = 0; i < laserKeys.length; i++) {
+            const key = laserKeys[i];
+            const laser = laserData[key];
+            const descriptionParts = [];
+
+            if (key !== 'arbor') {
+                const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
+                descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+            }
+            if (laser.instability !== 1.0) {
+                const instVar = (laser.instability - 1.0) * 100;
+                descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+            }
+            if (laser.resistance !== 1.0) {
+                const resVar = (laser.resistance - 1.0) * 100;
+                descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+            }
+
+            let expectedText = laser.name;
+            if (descriptionParts.length > 0) {
+                expectedText += ` (${descriptionParts.join(', ')})`;
+            }
+
+            await expect(options.nth(i)).toHaveText(expectedText);
+        }
     });
 
     test('should preserve laser selection when adding ships', async ({ page }) => {

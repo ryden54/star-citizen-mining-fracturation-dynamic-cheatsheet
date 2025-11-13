@@ -3,36 +3,58 @@
 
 const laserData = {
     'arbor': {
-        power: 1850,
+        fracturingPower: 1890,
+        extractionPower: 1850,
         instability: 1.0,
         resistance: 1.0,
         moduleSlots: 3,
-        name: 'Arbor (default)',
-        description: 'Standard rental laser - balanced but limited power'
+        name: 'Arbor MH1',
+        description: 'Default laser. Trade-off: Balanced performance, no bonuses.'
     },
     'hofstede': {
-        power: 1295,
+        fracturingPower: 2100,
+        extractionPower: 1295,
         instability: 0.5,
         resistance: 0.7,  // -30% resistance bonus
         moduleSlots: 3,
         name: 'Hofstede S1',
-        description: 'Lower power but excellent resistance reduction'
+        description: 'Specialized in fracturing dense materials. Trade-off: Lower extraction speed.'
     },
     'helix': {
-        power: 1850,
-        instability: 0.6,  // -40% inert materials
+        fracturingPower: 3150,
+        extractionPower: 1850,
+        instability: 0.6,
         resistance: 0.7,   // -30% resistance bonus
         moduleSlots: 3,
         name: 'Helix I',
-        description: 'Same extraction power as Arbor but better modifiers'
+        description: 'High fracturing power for tough rocks. Trade-off: Consumes more power.'
     },
     'lancet': {
-        power: 1850,
+        fracturingPower: 2520,
+        extractionPower: 1850,
         instability: 0.7,
         resistance: 1.0,
         moduleSlots: 3,
         name: 'Lancet MH1',
-        description: 'Support laser - reduces instability for team mining'
+        description: 'Support laser that stabilizes fracturing. Trade-off: No power loss.'
+    },
+    'klein-s1': {
+        fracturingPower: 2220,
+        extractionPower: 2220,
+        instability: 1.20, // +20% inert materials
+        resistance: 0.55,  // -45% resistance
+        moduleSlots: 3,
+        name: 'Klein-S1',
+        description: 'Excellent for very dense rocks. Trade-off: Increased inert materials.'
+    },
+    'impact-i': {
+        fracturingPower: 2100,
+        extractionPower: 2775,
+        instability: 1.20, // +20% inert materials
+        resistance: 1.10,  // +10% resistance
+        moduleSlots: 3,
+        name: 'Impact I',
+        description: 'High extraction speed. Trade-off: Increased rock resistance and inert materials.'
     }
 };
 
@@ -41,25 +63,24 @@ const laserData = {
 // Note: Charge window and charge rate benefits are not modeled in mass calculations
 // (they only affect gameplay, not fracture capacity)
 const moduleData = {
-    'none': { power: 1.0, name: '(None)', description: 'No module' },
-    // Greycat Industrial - Reduce power for wider optimal charge window (easier to use)
-    'fltr': { power: 0.85, name: 'FLTR', description: '-15% power (easier green zone)' },
-    'fltr-l': { power: 0.90, name: 'FLTR-L', description: '-10% power (easier green zone)' },
-    'fltr-xl': { power: 0.95, name: 'FLTR-XL', description: '-5% power (easier green zone)' },
-    'xtr': { power: 0.85, name: 'XTR', description: '-15% power, +15% optimal window' },
-    'xtr-l': { power: 0.90, name: 'XTR-L', description: '-10% power, +22% optimal window' },
-    'xtr-xl': { power: 0.95, name: 'XTR-XL', description: '-5% power, +25% optimal window' },
-    // Thermyte Concern - Reduce power for faster charge (quicker fracturing)
-    'focus': { power: 0.85, name: 'Focus', description: '-15% power, +30% charge speed' },
-    'focus-ii': { power: 0.90, name: 'Focus II', description: '-10% power, +37% charge speed' },
-    'focus-iii': { power: 0.95, name: 'Focus III', description: '-5% power, +40% charge speed' },
-    // Shubin Interstellar - Pure power boost (harder rocks, but harder to control)
-    'rieger': { power: 1.15, name: 'Rieger', description: '+15% power (harder to control)' },
-    'rieger-c2': { power: 1.20, name: 'Rieger-C2', description: '+20% power (harder to control)' },
-    'rieger-c3': { power: 1.25, name: 'Rieger-C3', description: '+25% power (harder to control)' },
-    'vaux': { power: 1.15, name: 'Vaux', description: '+15% power (extraction focus)' },
-    'vaux-c2': { power: 1.20, name: 'Vaux-C2', description: '+20% power (extraction focus)' },
-    'vaux-c3': { power: 1.25, name: 'Vaux-C3', description: '+25% power (extraction focus)' }
+    'none': { name: '(None)', manufacturer: 'System', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.0, effects: [] },
+    // Greycat Industrial
+    'fltr': { name: 'FLTR', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.85, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
+    'fltr-l': { name: 'FLTR-L', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.90, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
+    'fltr-xl': { name: 'FLTR-XL', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.95, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
+    'xtr': { name: 'XTR', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.85, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Optimal Window: +15%', type: 'pro' }] },
+    'xtr-l': { name: 'XTR-L', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.90, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Optimal Window: +22%', type: 'pro' }] },
+    // Thermyte Concern
+    'focus': { name: 'Focus', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.85, extractionPowerModifier: 1.30, effects: [] },
+    'focus-ii': { name: 'Focus II', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.90, extractionPowerModifier: 1.37, effects: [] },
+    'focus-iii': { name: 'Focus III', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.95, extractionPowerModifier: 1.40, effects: [] },
+    // Shubin Interstellar
+    'rieger': { name: 'Rieger', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.15, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -10%', type: 'con' }] },
+    'rieger-c2': { name: 'Rieger-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.20, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -3%', type: 'con' }] },
+    'rieger-c3': { name: 'Rieger-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.25, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -1%', type: 'con' }] },
+    'vaux': { name: 'Vaux', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.15, effects: [{ text: 'Optimal Charge Rate: -20%', type: 'con' }] },
+    'vaux-c2': { name: 'Vaux-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.20, effects: [{ text: 'Optimal Charge Rate: -15%', type: 'con' }] },
+    'vaux-c3': { name: 'Vaux-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.25, effects: [{ text: 'Optimal Charge Rate: -5%', type: 'con' }] }
 };
 
 // Export to global namespace

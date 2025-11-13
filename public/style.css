@@ -276,3 +276,31 @@ tr:hover {
     height: 20px;
     border-radius: 3px;
 }
+
+.laser-description {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    border-left: 3px solid rgba(0, 212, 255, 0.3);
+}
+
+.laser-stats {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.laser-text {
+    font-size: 0.85em;
+    color: #bbb;
+    font-style: italic;
+}
+
+.module-description {
+    font-size: 0.8em;
+    margin-top: 5px;
+    padding-left: 2px;
+    color: #bbb;
+    min-height: 1.2em; /* Reserve space to prevent layout shifts */
+}
