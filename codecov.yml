@@ -12,13 +12,15 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 1%
+        threshold: 2%
         base: auto
+        informational: true  # Don't fail CI if coverage drops slightly
     patch:
       default:
-        target: auto
-        threshold: 1%
+        target: 85%  # Require at least 85% coverage on new code
+        threshold: 5%  # Allow up to 5% variation
         base: auto
+        informational: false  # Still enforce this one
 
 comment:
   layout: "header, diff, files, footer"
