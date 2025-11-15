@@ -1,6 +1,8 @@
 # Star Citizen - Cooperative Mining Calculator
 
-[![codecov](https://codecov.io/gh/ryden54/star-citizen-rock-fracturation/graph/badge.svg)](https://codecov.io/gh/ryden54/star-citizen-rock-fracturation)
+**Live app:** https://ryden54.github.io/star-citizen-mining-fracturation-dynamic-cheatsheet/
+
+[![codecov](https://codecov.io/gh/ryden54/star-citizen-mining-fracturation-dynamic-cheatsheet/graph/badge.svg)](https://codecov.io/gh/ryden54/star-citizen-mining-fracturation-dynamic-cheatsheet)
 
 Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Helps players determine during prospecting whether a rock is fracturable with their current configuration.
 
