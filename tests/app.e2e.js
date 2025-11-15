@@ -107,24 +107,29 @@ test.describe('Star Citizen Mining Calculator', () => {
         // 1. Check the count
         await expect(options).toHaveCount(laserKeys.length);
 
-        // 2. Check the text of each option
+        // 2. Check the text of each option (order: Power, Resistance, Instability)
         const arborFracturingPower = laserData['arbor'].fracturingPower;
         for (let i = 0; i < laserKeys.length; i++) {
             const key = laserKeys[i];
             const laser = laserData[key];
             const descriptionParts = [];
 
+            // 1. Fracturing Power first
             if (key !== 'arbor') {
                 const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-                descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+                descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
             }
-            if (laser.instability !== 1.0) {
-                const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
-            }
+
+            // 2. Resistance second (affects fracturation)
             if (laser.resistance !== 1.0) {
                 const resVar = (laser.resistance - 1.0) * 100;
                 descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+            }
+
+            // 3. Instability/optimal window third (quality of life)
+            if (laser.instability !== 1.0) {
+                const instVar = (laser.instability - 1.0) * 100;
+                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let expectedText = laser.name;
@@ -206,5 +211,202 @@ test.describe('Star Citizen Mining Calculator', () => {
 
         expect(innerHTML).toContain(expectedPwrHtml);
         expect(innerHTML).toContain(expectedEffectHtml);
+    });
+
+    test('should display Rock Setup section with Add Gadget button', async ({ page }) => {
+        const rockSetupHeading = page.locator('h2:has-text("Rock Setup")');
+        await expect(rockSetupHeading).toBeVisible();
+
+        const addGadgetButton = page.locator('button:has-text("Add Gadget")');
+        await expect(addGadgetButton).toBeVisible();
+    });
+
+    test('should add a gadget when clicking Add Gadget button', async ({ page }) => {
+        const addGadgetButton = page.locator('button:has-text("Add Gadget")');
+        await addGadgetButton.click();
+
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+        await expect(gadgetItems.first().locator('.gadget-header label')).toContainText('Gadget #1');
+    });
+
+    test('should show gadget select options with abbreviated descriptions', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+        await expect(gadgetSelect).toBeVisible();
+
+        // Check that options have descriptions
+        const optionsText = await gadgetSelect.locator('option').allTextContents();
+
+        // Sabir should have description with resistance and instability
+        const sabirOption = optionsText.find(text => text.includes('Sabir'));
+        expect(sabirOption).toBeTruthy();
+        expect(sabirOption).toContain('Res:');
+        expect(sabirOption).toContain('Instability:');
+
+        // OptiMax should have description with resistance
+        const optimaxOption = optionsText.find(text => text.includes('OptiMax'));
+        expect(optimaxOption).toBeTruthy();
+        expect(optimaxOption).toContain('Res:');
+
+        // Stalwart should have a description (Opt. window rate)
+        const stalwartOption = optionsText.find(text => text.includes('Stalwart'));
+        expect(stalwartOption).toBeTruthy();
+        expect(stalwartOption).toContain('Opt. window rate');
+
+        // WaveShift should have a description (Opt. window size)
+        const waveshiftOption = optionsText.find(text => text.includes('WaveShift'));
+        expect(waveshiftOption).toBeTruthy();
+        expect(waveshiftOption).toContain('Opt. window size');
+    });
+
+    test('should remove a gadget when clicking remove button', async ({ page }) => {
+        // Add two gadgets
+        await page.click('button:has-text("Add Gadget")');
+        await page.click('button:has-text("Add Gadget")');
+
+        let gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(2);
+
+        // Remove the first gadget
+        const removeButton = page.locator('.remove-gadget-btn').first();
+        await removeButton.click();
+
+        gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+        await expect(gadgetItems.first().locator('.gadget-header label')).toContainText('Gadget #1');
+    });
+
+    test('should display gadget effects in description', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        // Get gadgetData from the page's context
+        const gadgetData = await page.evaluate(() => window.FracturationParty.data.gadgetData);
+        const sabirGadget = gadgetData.sabir;
+
+        // Check that effects are displayed
+        const descriptionDiv = page.locator('.gadget-item .gadget-description').first();
+        const innerHTML = await descriptionDiv.innerHTML();
+
+        // Check for effect text and colors
+        sabirGadget.effects.forEach(effect => {
+            const effectColor = effect.type === 'pro' ? 'green' : 'red';
+            const expectedHtml = `<span style="color:${effectColor};">${effect.text}</span>`;
+            expect(innerHTML).toContain(effect.text);
+        });
+    });
+
+    test('should update capacity table when adding gadgets', async ({ page }) => {
+        // Get initial capacity at 50% resistance
+        const initialCapacity = await page.locator('table tr:has-text("50%") td:nth-child(2)').textContent();
+
+        // Add a resistance-reducing gadget (Sabir reduces rock resistance by 50%)
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+        await gadgetSelect.selectOption('sabir');
+
+        // Wait for table to update
+        await page.waitForTimeout(100);
+
+        // Get new capacity - should be higher with resistance-reducing gadget
+        const newCapacity = await page.locator('table tr:has-text("50%") td:nth-child(2)').textContent();
+
+        expect(newCapacity).not.toBe(initialCapacity);
+    });
+
+    test('should change gadget type and update description', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+
+        // Initially Sabir (default)
+        await expect(gadgetSelect).toHaveValue('sabir');
+
+        // Change to OptiMax
+        await gadgetSelect.selectOption('optimax');
+        await expect(gadgetSelect).toHaveValue('optimax');
+
+        // Check that description updated
+        const gadgetData = await page.evaluate(() => window.FracturationParty.data.gadgetData);
+        const optimaxGadget = gadgetData.optimax;
+
+        const descriptionDiv = page.locator('.gadget-item .gadget-description').first();
+        const innerHTML = await descriptionDiv.innerHTML();
+
+        // OptiMax should show its specific effects
+        optimaxGadget.effects.forEach(effect => {
+            expect(innerHTML).toContain(effect.text);
+        });
+    });
+
+    test('should show altered resistance column when laser has resistance modifier', async ({ page }) => {
+        // Select Helix laser which has 0.7 resistance modifier (-30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        // Wait for table to update
+        await page.waitForTimeout(100);
+
+        // Table should now show "Natural Resistance" and "Altered Resistance" columns
+        const tableHeaders = await page.locator('table th').allTextContents();
+
+        expect(tableHeaders.length).toBe(3);
+        expect(tableHeaders[0]).toContain('Natural Resistance');
+        expect(tableHeaders[1]).toContain('Altered Resistance');
+        expect(tableHeaders[2]).toContain('Maximum Mass');
+    });
+
+    test('should calculate altered resistance correctly with laser modifier only', async ({ page }) => {
+        // Select Helix laser (0.7 resistance = -30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        await page.waitForTimeout(100);
+
+        // Check 50% natural resistance row
+        const row = page.locator('table tr:has-text("50%")').first();
+        const cells = await row.locator('td').allTextContents();
+
+        // Natural: 50%, Altered: 50% * 0.7 = 35%
+        expect(cells[0]).toContain('50%');
+        expect(cells[1]).toContain('35%');
+    });
+
+    test('should calculate altered resistance correctly with both gadget and laser modifiers', async ({ page }) => {
+        // Add Sabir gadget (-50% rock resistance)
+        await page.click('button:has-text("Add Gadget")');
+        const gadgetSelect = page.locator('#gadget-0');
+        await gadgetSelect.selectOption('sabir');
+
+        // Select Helix laser (0.7 resistance = -30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        await page.waitForTimeout(100);
+
+        // Check 50% natural resistance row
+        const row = page.locator('table tr:has-text("50%")').first();
+        const cells = await row.locator('td').allTextContents();
+
+        // Natural: 50%
+        // After Sabir: 50% * (1 - 0.5) = 25%
+        // After Helix: 25% * 0.7 = 17.5% ≈ 18%
+        expect(cells[0]).toContain('50%');
+        expect(cells[1]).toMatch(/1[78]%/); // Accept 17% or 18% due to rounding
+    });
+
+    test('should not show altered resistance column with Arbor laser and no gadgets', async ({ page }) => {
+        // Arbor has resistance = 1.0 (no modifier)
+        const laserSelect = page.locator('#laser-0');
+        await expect(laserSelect).toHaveValue('arbor');
+
+        // Table should only show 2 columns
+        const tableHeaders = await page.locator('table th').allTextContents();
+
+        expect(tableHeaders.length).toBe(2);
+        expect(tableHeaders[0]).toContain('Resistance');
+        expect(tableHeaders[1]).toContain('Maximum Mass');
     });
 });

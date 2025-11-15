@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
     laserData,
     moduleData,
+    gadgetData,
     calculateCombinedPower,
     calculateCombinedModifiers,
+    calculateRockResistance,
     calculateMaxMass
 } from '../public/js/app.js';
 
@@ -151,6 +153,135 @@ describe('calculateMaxMass', () => {
     });
 });
 
+describe('Gadget Data', () => {
+    it('should have all gadget types defined', () => {
+        expect(gadgetData).toBeDefined();
+        expect(gadgetData.boremax).toBeDefined();
+        expect(gadgetData.okunis).toBeDefined();
+        expect(gadgetData.optimax).toBeDefined();
+        expect(gadgetData.sabir).toBeDefined();
+        expect(gadgetData.stalwart).toBeDefined();
+        expect(gadgetData.waveshift).toBeDefined();
+    });
+
+    it('should have correct properties for each gadget', () => {
+        Object.values(gadgetData).forEach(gadget => {
+            expect(gadget).toHaveProperty('name');
+            expect(gadget).toHaveProperty('manufacturer');
+            expect(gadget).toHaveProperty('rockInstability');
+            expect(gadget).toHaveProperty('rockResistance');
+            expect(gadget).toHaveProperty('effects');
+            expect(Array.isArray(gadget.effects)).toBe(true);
+        });
+    });
+});
+
+describe('calculateRockResistance', () => {
+    it('should return base resistance with no gadgets', () => {
+        const resistance = calculateRockResistance(0.5, []);
+        expect(resistance).toBe(0.5);
+    });
+
+    it('should reduce resistance with Sabir gadget', () => {
+        const baseResistance = 0.5;
+        const resistance = calculateRockResistance(baseResistance, ['sabir']);
+        // Sabir has -50% rock resistance, so: 0.5 * (1 - 0.5) = 0.25
+        expect(resistance).toBeCloseTo(0.25);
+    });
+
+    it('should reduce resistance with OptiMax gadget', () => {
+        const baseResistance = 0.5;
+        const resistance = calculateRockResistance(baseResistance, ['optimax']);
+        // OptiMax has -30% rock resistance, so: 0.5 * (1 - 0.3) = 0.35
+        expect(resistance).toBeCloseTo(0.35);
+    });
+
+    it('should increase resistance with BoreMax gadget', () => {
+        const baseResistance = 0.5;
+        const resistance = calculateRockResistance(baseResistance, ['boremax']);
+        // BoreMax has +10% rock resistance, so: 0.5 * (1 + 0.1) = 0.55
+        expect(resistance).toBeCloseTo(0.55);
+    });
+
+    it('should not change resistance with Okunis gadget', () => {
+        const baseResistance = 0.5;
+        const resistance = calculateRockResistance(baseResistance, ['okunis']);
+        // Okunis has 0% rock resistance modifier
+        expect(resistance).toBe(0.5);
+    });
+
+    it('should stack multiple gadgets additively', () => {
+        const baseResistance = 0.5;
+        const resistance = calculateRockResistance(baseResistance, ['sabir', 'optimax']);
+        // Sabir: -50%, OptiMax: -30%, total: -80%
+        // 0.5 * (1 - 0.5 - 0.3) = 0.5 * 0.2 = 0.1
+        expect(resistance).toBeCloseTo(0.1);
+    });
+
+    it('should clamp resistance at 0 when gadgets reduce it below 0', () => {
+        const baseResistance = 0.3;
+        const resistance = calculateRockResistance(baseResistance, ['sabir', 'optimax']);
+        // 0.3 * (1 - 0.5 - 0.3) = 0.3 * 0.2 = 0.06, should be >= 0
+        expect(resistance).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should clamp resistance at 1 when gadgets increase it above 1', () => {
+        const baseResistance = 0.95;
+        const resistance = calculateRockResistance(baseResistance, ['boremax']);
+        // 0.95 * 1.1 = 1.045, should be clamped to 1
+        expect(resistance).toBeLessThanOrEqual(1);
+    });
+});
+
+describe('calculateMaxMass with gadgets', () => {
+    it('should maintain backward compatibility with no gadgets parameter', () => {
+        const maxMassNoGadgets = calculateMaxMass(0.5, createShips('arbor'));
+        const maxMassEmptyArray = calculateMaxMass(0.5, createShips('arbor'), []);
+        expect(maxMassNoGadgets).toBe(maxMassEmptyArray);
+    });
+
+    it('should increase max mass when using resistance-reducing gadget', () => {
+        const maxMassNoGadget = calculateMaxMass(0.5, createShips('arbor'), []);
+        const maxMassWithSabir = calculateMaxMass(0.5, createShips('arbor'), ['sabir']);
+        // Sabir reduces rock resistance by 50%, making it easier to fracture
+        expect(maxMassWithSabir).toBeGreaterThan(maxMassNoGadget);
+    });
+
+    it('should decrease max mass when using resistance-increasing gadget', () => {
+        const maxMassNoGadget = calculateMaxMass(0.5, createShips('arbor'), []);
+        const maxMassWithBoreMax = calculateMaxMass(0.5, createShips('arbor'), ['boremax']);
+        // BoreMax increases rock resistance by 10%, making it harder to fracture
+        expect(maxMassWithBoreMax).toBeLessThan(maxMassNoGadget);
+    });
+
+    it('should calculate correctly with multiple gadgets', () => {
+        const maxMassNoGadgets = calculateMaxMass(0.6, createShips('arbor'), []);
+        const maxMassWithGadgets = calculateMaxMass(0.6, createShips('arbor'), ['sabir', 'optimax']);
+        // Both Sabir and OptiMax reduce resistance, so max mass should increase significantly
+        expect(maxMassWithGadgets).toBeGreaterThan(maxMassNoGadgets);
+    });
+
+    it('should work with gadgets that do not affect resistance', () => {
+        const maxMassNoGadget = calculateMaxMass(0.5, createShips('arbor'), []);
+        const maxMassWithStalwart = calculateMaxMass(0.5, createShips('arbor'), ['stalwart']);
+        // Stalwart doesn't affect rock resistance, only laser instability and window
+        expect(maxMassWithStalwart).toBe(maxMassNoGadget);
+    });
+
+    it('should combine laser resistance modifiers with gadget resistance modifiers', () => {
+        // Helix has 0.7 resistance modifier (-30%)
+        // Sabir reduces rock resistance by 50%
+        const baseResistance = 0.5;
+        const rockResistanceAfterGadget = baseResistance * (1 - 0.5); // 0.25
+        const effectiveResistance = rockResistanceAfterGadget * 0.7; // 0.175
+
+        const maxMass = calculateMaxMass(baseResistance, createShips('helix'), ['sabir']);
+        const expectedMass = 8000 * (laserData.helix.fracturingPower / 1890) * Math.pow(1 - effectiveResistance, 2.5);
+
+        expect(maxMass).toBeCloseTo(expectedMass, -2);
+    });
+});
+
 describe('Real-world scenarios', () => {
     it('should handle two rental Prospectors (Arbor lasers)', () => {
         const config = createShips('arbor', 'arbor');
@@ -195,5 +326,29 @@ describe('Real-world scenarios', () => {
         const expectedMass = maxMassNoModule * moduleData.fltr.fracturingPowerModifier;
         expect(maxMassWithFLTR).toBeLessThan(maxMassNoModule);
         expect(maxMassWithFLTR).toBeCloseTo(expectedMass, -2);
+    });
+
+    it('should handle realistic mining scenario with gadgets', () => {
+        // Scenario: 2 Helix lasers with Rieger modules and a Sabir gadget on a 60% resistance rock
+        const config = [
+            createShip('helix', ['rieger', 'rieger', 'rieger']),
+            createShip('helix', ['rieger', 'rieger', 'rieger'])
+        ];
+        const maxMassNoGadget = calculateMaxMass(0.60, config, []);
+        const maxMassWithSabir = calculateMaxMass(0.60, config, ['sabir']);
+
+        // Sabir should make a significant difference on high resistance rocks
+        expect(maxMassWithSabir).toBeGreaterThan(maxMassNoGadget * 1.5);
+    });
+
+    it('should handle multiple gadgets on difficult rock', () => {
+        // Scenario: Very high resistance rock (80%) with optimal gadget setup
+        const config = createShips('helix', 'helix');
+        const maxMassNoGadgets = calculateMaxMass(0.80, config, []);
+        const maxMassWithGadgets = calculateMaxMass(0.80, config, ['sabir', 'optimax']);
+
+        // With Sabir (-50%) and OptiMax (-30%), the effective resistance is much lower
+        // This should dramatically increase the max mass
+        expect(maxMassWithGadgets).toBeGreaterThan(maxMassNoGadgets);
     });
 });

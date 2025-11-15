@@ -3,6 +3,7 @@
 // UI State
 let shipCount = 1;
 let shipModules = {}; // Store modules for each ship: { 0: ['none', 'none', 'none'], 1: [...] }
+let gadgets = []; // Store gadgets placed on rock: ['sabir', 'optimax', ...]
 
 /**
  * Add a new ship to the configuration
@@ -61,18 +62,25 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
     for (const laserKey in laserData) {
         const laser = laserData[laserKey];
         const descriptionParts = [];
+
+        // 1. Fracturing Power FIRST (most important)
         if (laserKey !== 'arbor') {
             const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-            descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+            descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
         }
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
-        }
+
+        // 2. Resistance SECOND (directly affects fracturation)
         if (laser.resistance !== 1.0) {
             const resVar = (laser.resistance - 1.0) * 100;
             descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
         }
+
+        // 3. Instability/optimal window THIRD (quality of life)
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+        }
+
         let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
         laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
     }
@@ -84,13 +92,44 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         if (!modulesByManufacturer[module.manufacturer]) {
             modulesByManufacturer[module.manufacturer] = [];
         }
-        modulesByManufacturer[module.manufacturer].push({ key, ...module });
+
+        // Build abbreviated description showing key modifiers
+        const descriptionParts = [];
+
+        // Fracturing Power FIRST (most important for fracturation)
+        const fracturingVar = (module.fracturingPowerModifier - 1.0) * 100;
+        if (fracturingVar !== 0) {
+            descriptionParts.push(`Fract. Pwr: ${fracturingVar > 0 ? '+' : ''}${fracturingVar.toFixed(0)}%`);
+        }
+
+        // Extraction Power second (still related to mining efficiency)
+        const extractionVar = (module.extractionPowerModifier - 1.0) * 100;
+        if (extractionVar !== 0) {
+            descriptionParts.push(`Extr. Pwr: ${extractionVar > 0 ? '+' : ''}${extractionVar.toFixed(0)}%`);
+        }
+
+        // Other effects from the effects array (Opt. window, etc.)
+        module.effects.forEach(effect => {
+            if (effect.text.includes('Opt. window:')) {
+                descriptionParts.push(effect.text);
+            } else if (effect.text.includes('Opt. charge rate:')) {
+                descriptionParts.push(effect.text);
+            }
+        });
+
+        const fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
+
+        modulesByManufacturer[module.manufacturer].push({
+            key,
+            ...module,
+            fullDescription
+        });
     }
     let moduleOptionsHTML = '<option value="none">(None)</option>';
     for (const manufacturer in modulesByManufacturer) {
         moduleOptionsHTML += `<optgroup label="${manufacturer}">`;
         modulesByManufacturer[manufacturer].forEach(module => {
-            moduleOptionsHTML += `<option value="${module.key}">${module.name}</option>`;
+            moduleOptionsHTML += `<option value="${module.key}">${module.name}${module.fullDescription}</option>`;
         });
         moduleOptionsHTML += `</optgroup>`;
     }
@@ -119,21 +158,28 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         const moduleSlots = laser.moduleSlots;
 
         const statsParts = [];
+
+        // 1. Fracturing Power FIRST (most important for fracturation)
         if (laserKey !== 'arbor') {
             const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
             const pwrColor = variation > 0 ? 'green' : 'red';
-            statsParts.push(`Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
+            statsParts.push(`Fract. Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
         }
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            const instColor = instVar > 0 ? 'green' : 'red';
-            statsParts.push(`Opt. Window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
-        }
+
+        // 2. Resistance SECOND (directly affects fracturation calculations)
         if (laser.resistance !== 1.0) {
             const resVar = (laser.resistance - 1.0) * 100;
             const resColor = resVar < 0 ? 'green' : 'red';
             statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
         }
+
+        // 3. Instability/optimal window THIRD (quality of life)
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            const instColor = instVar > 0 ? 'green' : 'red';
+            statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+        }
+
         const statsHTML = statsParts.join(', ');
 
         let modulesHTML = '';
@@ -219,19 +265,161 @@ function onLaserChange(shipIndex, focusedId = null) {
  * @param {string|null} focusedId - ID of the element to re-focus
  */
 function onModuleChange(shipIndex, slotIndex, focusedId = null) {
+    const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
+    const maxModuleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
+
+    if (slotIndex >= maxModuleSlots) {
+        throw new Error(`Attempted to assign module to slot ${slotIndex} for ship ${shipIndex}, but laser "${laserKey}" only supports ${maxModuleSlots} module slots.`);
+    }
+
     const moduleSelect = document.getElementById(`module-${shipIndex}-${slotIndex}`);
     focusedId = focusedId || moduleSelect.id; // Use current element's ID if not provided
 
     if (moduleSelect) {
         if (!shipModules[shipIndex]) {
-            const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
-            const moduleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
-            shipModules[shipIndex] = Array(moduleSlots).fill('none');
+            // This block should ideally not be reached if UI is correctly built
+            shipModules[shipIndex] = Array(maxModuleSlots).fill('none');
         }
         shipModules[shipIndex][slotIndex] = moduleSelect.value;
     }
     updateShipsUI(null, focusedId);
     updateTable();
+}
+
+/**
+ * Add a new gadget to the rock configuration
+ */
+function addGadget() {
+    gadgets.push('sabir'); // Default gadget
+    updateGadgetsUI();
+    updateTable();
+}
+
+/**
+ * Remove a gadget from the rock configuration
+ * @param {number} index - Gadget index to remove
+ */
+function removeGadget(index) {
+    gadgets.splice(index, 1);
+    updateGadgetsUI();
+    updateTable();
+}
+
+/**
+ * Handle gadget type change event
+ * @param {number} index - Index of the gadget that changed
+ * @param {string|null} focusedId - ID of the element to re-focus
+ */
+function onGadgetChange(index, focusedId = null) {
+    const gadgetSelect = document.getElementById(`gadget-${index}`);
+    focusedId = focusedId || gadgetSelect?.id; // Use current element's ID if not provided
+
+    if (gadgetSelect) {
+        gadgets[index] = gadgetSelect.value;
+        updateGadgetsUI(focusedId);
+        updateTable();
+    }
+}
+
+/**
+ * Update the gadgets configuration UI
+ * @param {string|null} focusedElementId - Optional ID of the element to re-focus after update
+ */
+function updateGadgetsUI(focusedElementId = null) {
+    const { gadgetData } = window.FracturationParty.data;
+    const container = document.getElementById('gadgets-container');
+
+    if (!container) return;
+
+    // Generate gadget options grouped by manufacturer with abbreviated descriptions
+    const gadgetsByManufacturer = {};
+    for (const key in gadgetData) {
+        const gadget = gadgetData[key];
+        if (!gadgetsByManufacturer[gadget.manufacturer]) {
+            gadgetsByManufacturer[gadget.manufacturer] = [];
+        }
+
+        // Build abbreviated description showing key modifiers
+        const descriptionParts = [];
+        if (gadget.rockResistance !== 0) {
+            const resVar = gadget.rockResistance * 100;
+            descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+        }
+        if (gadget.rockInstability !== 0) {
+            const instVar = gadget.rockInstability * 100;
+            descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+        }
+
+        // For gadgets without rock modifiers, show their main effect
+        if (descriptionParts.length === 0) {
+            if (key === 'stalwart') {
+                descriptionParts.push('Opt. window rate: +50%');
+            } else if (key === 'waveshift') {
+                descriptionParts.push('Opt. window size: +100%');
+            }
+        }
+
+        const fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
+
+        gadgetsByManufacturer[gadget.manufacturer].push({
+            key,
+            ...gadget,
+            fullDescription
+        });
+    }
+
+    let gadgetOptionsHTML = '';
+    for (const manufacturer in gadgetsByManufacturer) {
+        gadgetOptionsHTML += `<optgroup label="${manufacturer}">`;
+        gadgetsByManufacturer[manufacturer].forEach(gadget => {
+            gadgetOptionsHTML += `<option value="${gadget.key}">${gadget.name}${gadget.fullDescription}</option>`;
+        });
+        gadgetOptionsHTML += `</optgroup>`;
+    }
+
+    container.innerHTML = '';
+
+    gadgets.forEach((gadgetKey, index) => {
+        const gadget = gadgetData[gadgetKey];
+        const gadgetDiv = document.createElement('div');
+        gadgetDiv.className = 'gadget-item';
+
+        // Generate description HTML for effects
+        const effectsHTML = gadget.effects.map(effect => {
+            let effectColor = '#bbb';
+            if (effect.type === 'pro') effectColor = 'green';
+            if (effect.type === 'con') effectColor = 'red';
+            return `<span style="color:${effectColor};">${effect.text}</span>`;
+        }).join(', ');
+
+        gadgetDiv.innerHTML = `
+            <div class="gadget-header">
+                <label>Gadget #${index + 1}</label>
+                <button class="remove-gadget-btn" onclick="FracturationParty.ui.removeGadget(${index})" title="Remove gadget">🗑️</button>
+            </div>
+            <div class="gadget-select-container">
+                <label>Type</label>
+                <select id="gadget-${index}" onchange="FracturationParty.ui.onGadgetChange(${index})">
+                    ${gadgetOptionsHTML}
+                </select>
+            </div>
+            <div class="gadget-description">
+                ${effectsHTML}
+            </div>
+        `;
+        container.appendChild(gadgetDiv);
+
+        // Set the selected value
+        document.getElementById(`gadget-${index}`).value = gadgetKey;
+    });
+
+    // Restore focus if an element ID was provided
+    if (focusedElementId) {
+        const elementToFocus = document.getElementById(focusedElementId);
+        if (elementToFocus) {
+            elementToFocus.focus();
+        }
+    }
 }
 
 /**
@@ -286,16 +474,54 @@ function getShipConfig() {
  * Update the capacity table based on current configuration
  */
 function updateTable() {
-    const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
+    const { calculateMaxMass, calculateRockResistance, calculateCombinedModifiers } = window.FracturationParty.calculations;
+    const { gadgetData } = window.FracturationParty.data;
     const config = getShipConfig();
     const resistanceLevels = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80];
 
-    let html = '<table>';
-    html += '<tr><th>Resistance</th><th>Maximum mass for joined fracturation</th></tr>';
+    // Check if any gadget modifies rock resistance
+    let hasGadgetResistanceModifier = false;
+    gadgets.forEach(gadgetKey => {
+        if (gadgetKey && gadgetData[gadgetKey] && gadgetData[gadgetKey].rockResistance !== 0) {
+            hasGadgetResistanceModifier = true;
+        }
+    });
 
+    // Check if any laser modifies resistance
+    const laserModifiers = calculateCombinedModifiers(config);
+    const hasLaserResistanceModifier = laserModifiers.resistance !== 1.0;
+
+    // Show altered resistance column if either gadgets or lasers modify resistance
+    const hasResistanceModifier = hasGadgetResistanceModifier || hasLaserResistanceModifier;
+
+    let html = '<table>';
+
+    // Table header
+    if (hasResistanceModifier) {
+        html += '<tr><th>Natural Resistance</th><th>Altered Resistance</th><th>Maximum Mass for Joined Fracturation</th></tr>';
+    } else {
+        html += '<tr><th>Resistance</th><th>Maximum Mass for Joined Fracturation</th></tr>';
+    }
+
+    // Table rows
     resistanceLevels.forEach(resistance => {
-        const maxMass = calculateMaxMass(resistance, config);
-        html += `<tr><td><strong>${(resistance * 100).toFixed(0)}%</strong></td><td>${maxMass > 0 ? maxMass.toLocaleString() : 'N/A'} kg</td></tr>`;
+        // Pass gadgets array to calculateMaxMass
+        // Resistance displayed is the INITIAL rock resistance (before any modifiers)
+        const maxMass = calculateMaxMass(resistance, config, gadgets);
+
+        if (hasResistanceModifier) {
+            // Calculate altered resistance: first gadgets (additive), then lasers (multiplicative)
+            const rockResistanceAfterGadgets = calculateRockResistance(resistance, gadgets);
+            const alteredResistance = rockResistanceAfterGadgets * laserModifiers.resistance;
+
+            html += `<tr>`;
+            html += `<td><strong>${(resistance * 100).toFixed(0)}%</strong></td>`;
+            html += `<td><strong>${(alteredResistance * 100).toFixed(0)}%</strong></td>`;
+            html += `<td>${maxMass > 0 ? maxMass.toLocaleString() : 'N/A'} kg</td>`;
+            html += `</tr>`;
+        } else {
+            html += `<tr><td><strong>${(resistance * 100).toFixed(0)}%</strong></td><td>${maxMass > 0 ? maxMass.toLocaleString() : 'N/A'} kg</td></tr>`;
+        }
     });
 
     html += '</table>';
@@ -309,6 +535,7 @@ function initializeUI() {
     if (document.getElementById('ships-container')) {
         shipModules[0] = ['none', 'none', 'none'];
         updateShipsUI();
+        updateGadgetsUI();
         updateTable();
     }
 }
@@ -320,7 +547,16 @@ window.FracturationParty.ui = {
     removeShip,
     onLaserChange,
     onModuleChange,
+    addGadget,
+    removeGadget,
+    onGadgetChange,
     generateModuleDescriptionHTML,
     updateTable,
-    initializeUI
+    initializeUI,
+    updateShipsUI,
+    // Test helpers
+    getShipModules: () => shipModules,
+    setShipModules: (newModules) => { shipModules = newModules; },
+    getShipCount: () => shipCount,
+    setShipCount: (newCount) => { shipCount = newCount; }
 };
