@@ -329,4 +329,73 @@ test.describe('Star Citizen Mining Calculator', () => {
             expect(innerHTML).toContain(effect.text);
         });
     });
+
+    test('should show altered resistance column when laser has resistance modifier', async ({ page }) => {
+        // Select Helix laser which has 0.7 resistance modifier (-30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        // Wait for table to update
+        await page.waitForTimeout(100);
+
+        // Table should now show "Natural Resistance" and "Altered Resistance" columns
+        const tableHeaders = await page.locator('table th').allTextContents();
+
+        expect(tableHeaders.length).toBe(3);
+        expect(tableHeaders[0]).toContain('Natural Resistance');
+        expect(tableHeaders[1]).toContain('Altered Resistance');
+        expect(tableHeaders[2]).toContain('Maximum Mass');
+    });
+
+    test('should calculate altered resistance correctly with laser modifier only', async ({ page }) => {
+        // Select Helix laser (0.7 resistance = -30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        await page.waitForTimeout(100);
+
+        // Check 50% natural resistance row
+        const row = page.locator('table tr:has-text("50%")').first();
+        const cells = await row.locator('td').allTextContents();
+
+        // Natural: 50%, Altered: 50% * 0.7 = 35%
+        expect(cells[0]).toContain('50%');
+        expect(cells[1]).toContain('35%');
+    });
+
+    test('should calculate altered resistance correctly with both gadget and laser modifiers', async ({ page }) => {
+        // Add Sabir gadget (-50% rock resistance)
+        await page.click('button:has-text("Add Gadget")');
+        const gadgetSelect = page.locator('#gadget-0');
+        await gadgetSelect.selectOption('sabir');
+
+        // Select Helix laser (0.7 resistance = -30%)
+        const laserSelect = page.locator('#laser-0');
+        await laserSelect.selectOption('helix');
+
+        await page.waitForTimeout(100);
+
+        // Check 50% natural resistance row
+        const row = page.locator('table tr:has-text("50%")').first();
+        const cells = await row.locator('td').allTextContents();
+
+        // Natural: 50%
+        // After Sabir: 50% * (1 - 0.5) = 25%
+        // After Helix: 25% * 0.7 = 17.5% ≈ 18%
+        expect(cells[0]).toContain('50%');
+        expect(cells[1]).toMatch(/1[78]%/); // Accept 17% or 18% due to rounding
+    });
+
+    test('should not show altered resistance column with Arbor laser and no gadgets', async ({ page }) => {
+        // Arbor has resistance = 1.0 (no modifier)
+        const laserSelect = page.locator('#laser-0');
+        await expect(laserSelect).toHaveValue('arbor');
+
+        // Table should only show 2 columns
+        const tableHeaders = await page.locator('table th').allTextContents();
+
+        expect(tableHeaders.length).toBe(2);
+        expect(tableHeaders[0]).toContain('Resistance');
+        expect(tableHeaders[1]).toContain('Maximum Mass');
+    });
 });
