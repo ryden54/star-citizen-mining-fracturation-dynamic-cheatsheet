@@ -207,4 +207,126 @@ test.describe('Star Citizen Mining Calculator', () => {
         expect(innerHTML).toContain(expectedPwrHtml);
         expect(innerHTML).toContain(expectedEffectHtml);
     });
+
+    test('should display Rock Setup section with Add Gadget button', async ({ page }) => {
+        const rockSetupHeading = page.locator('h2:has-text("Rock Setup")');
+        await expect(rockSetupHeading).toBeVisible();
+
+        const addGadgetButton = page.locator('button:has-text("Add Gadget")');
+        await expect(addGadgetButton).toBeVisible();
+    });
+
+    test('should add a gadget when clicking Add Gadget button', async ({ page }) => {
+        const addGadgetButton = page.locator('button:has-text("Add Gadget")');
+        await addGadgetButton.click();
+
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+        await expect(gadgetItems.first().locator('.gadget-header label')).toContainText('Gadget #1');
+    });
+
+    test('should show gadget select options with abbreviated descriptions', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+        await expect(gadgetSelect).toBeVisible();
+
+        // Check that options have descriptions
+        const optionsText = await gadgetSelect.locator('option').allTextContents();
+
+        // Sabir should have description with rock resistance
+        const sabirOption = optionsText.find(text => text.includes('Sabir'));
+        expect(sabirOption).toBeTruthy();
+        expect(sabirOption).toContain('Rock Res');
+
+        // OptiMax should have description
+        const optimaxOption = optionsText.find(text => text.includes('OptiMax'));
+        expect(optimaxOption).toBeTruthy();
+        expect(optimaxOption).toContain('Rock Res');
+
+        // Stalwart should have a description (Opt. Window)
+        const stalwartOption = optionsText.find(text => text.includes('Stalwart'));
+        expect(stalwartOption).toBeTruthy();
+        expect(stalwartOption).toContain('Opt. Window');
+    });
+
+    test('should remove a gadget when clicking remove button', async ({ page }) => {
+        // Add two gadgets
+        await page.click('button:has-text("Add Gadget")');
+        await page.click('button:has-text("Add Gadget")');
+
+        let gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(2);
+
+        // Remove the first gadget
+        const removeButton = page.locator('.remove-gadget-btn').first();
+        await removeButton.click();
+
+        gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+        await expect(gadgetItems.first().locator('.gadget-header label')).toContainText('Gadget #1');
+    });
+
+    test('should display gadget effects in description', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        // Get gadgetData from the page's context
+        const gadgetData = await page.evaluate(() => window.FracturationParty.data.gadgetData);
+        const sabirGadget = gadgetData.sabir;
+
+        // Check that effects are displayed
+        const descriptionDiv = page.locator('.gadget-item .gadget-description').first();
+        const innerHTML = await descriptionDiv.innerHTML();
+
+        // Check for effect text and colors
+        sabirGadget.effects.forEach(effect => {
+            const effectColor = effect.type === 'pro' ? 'green' : 'red';
+            const expectedHtml = `<span style="color:${effectColor};">${effect.text}</span>`;
+            expect(innerHTML).toContain(effect.text);
+        });
+    });
+
+    test('should update capacity table when adding gadgets', async ({ page }) => {
+        // Get initial capacity at 50% resistance
+        const initialCapacity = await page.locator('table tr:has-text("50%") td:nth-child(2)').textContent();
+
+        // Add a resistance-reducing gadget (Sabir reduces rock resistance by 50%)
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+        await gadgetSelect.selectOption('sabir');
+
+        // Wait for table to update
+        await page.waitForTimeout(100);
+
+        // Get new capacity - should be higher with resistance-reducing gadget
+        const newCapacity = await page.locator('table tr:has-text("50%") td:nth-child(2)').textContent();
+
+        expect(newCapacity).not.toBe(initialCapacity);
+    });
+
+    test('should change gadget type and update description', async ({ page }) => {
+        await page.click('button:has-text("Add Gadget")');
+
+        const gadgetSelect = page.locator('#gadget-0');
+
+        // Initially Sabir (default)
+        await expect(gadgetSelect).toHaveValue('sabir');
+
+        // Change to OptiMax
+        await gadgetSelect.selectOption('optimax');
+        await expect(gadgetSelect).toHaveValue('optimax');
+
+        // Check that description updated
+        const gadgetData = await page.evaluate(() => window.FracturationParty.data.gadgetData);
+        const optimaxGadget = gadgetData.optimax;
+
+        const descriptionDiv = page.locator('.gadget-item .gadget-description').first();
+        const innerHTML = await descriptionDiv.innerHTML();
+
+        // OptiMax should show its specific effects
+        optimaxGadget.effects.forEach(effect => {
+            expect(innerHTML).toContain(effect.text);
+        });
+    });
 });

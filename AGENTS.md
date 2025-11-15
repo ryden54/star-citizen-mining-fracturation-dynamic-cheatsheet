@@ -37,13 +37,14 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 
 **Implemented:**
 - Multi-Prospector configuration (dynamic add/remove)
-- 4 mining laser types (Arbor, Hofstede, Helix, Lancet)
+- 6 mining laser types (Arbor, Hofstede, Helix, Lancet, Klein-S1, Impact-I)
 - **Mining modules** (16 modules from 3 manufacturers, 3 slots per laser)
+- **Mining gadgets** (6 gadgets: BoreMax, Okunis, OptiMax, Sabir, Stalwart, WaveShift)
 - Capacity table by resistance level (0%-80%)
-- Module power multipliers (additive/multiplicative stacking)
+- Module power multipliers (multiplicative stacking)
+- Gadget resistance modifiers (additive stacking)
 
 **To implement:**
-- **Mining gadgets** (e.g., Saber) - temporary power modifiers
 - Support for other ships (MOLE with 3 lasers, etc.)
 - Laser sizes (S0, S1, S2...)
 - Ability to combine different ships (e.g., Prospector + MOLE)
@@ -56,11 +57,15 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 - `updateShipsUI()`: Regenerate configuration UI
 - `getShipConfig()`: Extract selected lasers and modules (returns `{laser, modules}` objects)
 - `onLaserChange(shipIndex)`: Handle laser changes and reset modules
+- `addGadget()`/`removeGadget(index)`: Manage gadgets on rock
+- `updateGadgetsUI()`: Regenerate gadgets UI
+- `onGadgetChange(index)`: Handle gadget type changes
 
 **Calculations:**
 - `calculateCombinedPower(ships)`: Sum of power values with module multipliers
 - `calculateCombinedModifiers(ships)`: Product of laser modifiers (instability/resistance)
-- `calculateMaxMass(resistance, ships)`: Main max mass formula
+- `calculateRockResistance(baseResistance, gadgets)`: Apply gadget modifiers to rock resistance
+- `calculateMaxMass(resistance, ships, gadgets)`: Main max mass formula with gadget support
 
 **User interface:**
 - `updateTable()`: Regenerate capacity table with module indicators
@@ -111,14 +116,21 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 3. **Confirm approach** - Discuss the implementation approach with the user before proceeding
 
 **During development:**
-1. **Always run tests after modifications** - Use `npm test` to run both unit and E2E tests
-2. **Verify all tests pass** - ALL tests (unit + E2E) must pass before committing
-3. **Test incrementally** - Run tests after each significant change, not just at the end
+1. **Write tests for all new code** - Add unit tests for new functions, update existing tests if behavior changes
+2. **Always run tests after modifications** - Use `npm test` to run both unit and E2E tests
+3. **Verify all tests pass** - ALL tests (unit + E2E) must pass before committing
+4. **Test incrementally** - Run tests after each significant change, not just at the end
+5. **Update test exports** - If adding new functions, export them in `public/js/app.js` for testing
 
 **Before committing:**
 1. **ALWAYS ask permission before committing** - The user must review and approve changes
 2. **Explain what was done** - Summarize the changes clearly
 3. **Wait for confirmation** - Never commit without explicit user approval
+4. **Keep commits cohesive** - Feature code and its tests must be in the same commit
+   - Do NOT create separate commits for "add feature", "fix tests", "add missing tests"
+   - Do NOT pollute git history with successive fix commits unless necessary/pertinent
+   - Use `git commit --amend` to update the last commit when adding tests or fixes
+   - A commit should represent a complete, coherent unit of work (feature + tests + docs)
 
 **Merging to main:**
 - **All feature branches must go through a Pull Request** - Never merge directly to main

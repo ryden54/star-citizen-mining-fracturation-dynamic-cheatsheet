@@ -45,12 +45,38 @@ function calculateCombinedModifiers(ships) {
 }
 
 /**
+ * Calculate rock resistance after applying gadget modifiers
+ * @param {number} baseResistance - Initial rock resistance (0.0 to 1.0)
+ * @param {Array} gadgets - Array of gadget keys placed on the rock
+ * @returns {number} Modified rock resistance
+ */
+function calculateRockResistance(baseResistance, gadgets) {
+    const { gadgetData } = window.FracturationParty.data;
+
+    // Apply gadget resistance modifiers additively
+    let resistanceModifier = 0;
+    gadgets.forEach(gadgetKey => {
+        if (gadgetKey && gadgetData[gadgetKey]) {
+            resistanceModifier += gadgetData[gadgetKey].rockResistance;
+        }
+    });
+
+    // Apply the modifier: resistance * (1 + modifier)
+    // Example: 50% resistance with Sabir (-50%) = 0.50 * (1 - 0.50) = 0.25 (25%)
+    const modifiedResistance = baseResistance * (1 + resistanceModifier);
+
+    // Clamp between 0 and 1
+    return Math.max(0, Math.min(1, modifiedResistance));
+}
+
+/**
  * Calculate maximum fracturable mass for given resistance and ship configuration
- * @param {number} resistance - Rock resistance (0.0 to 1.0)
+ * @param {number} resistance - Base rock resistance (0.0 to 1.0) before gadget modifiers
  * @param {Array} ships - Array of ship configurations {laser, modules}
+ * @param {Array} gadgets - Array of gadget keys placed on the rock
  * @returns {number} Maximum fracturable mass in kg (rounded)
  */
-function calculateMaxMass(resistance, ships) {
+function calculateMaxMass(resistance, ships, gadgets = []) {
     const combinedPower = calculateCombinedPower(ships);
     const modifiers = calculateCombinedModifiers(ships);
 
@@ -59,8 +85,11 @@ function calculateMaxMass(resistance, ships) {
     const baselinePower = 1890;
     const baselineMass = 8000;
 
-    // Apply resistance modifiers from lasers (e.g., Helix/Hofstede reduce effective resistance)
-    const effectiveResistance = resistance * modifiers.resistance;
+    // First apply gadget modifiers to rock resistance
+    const rockResistanceAfterGadgets = calculateRockResistance(resistance, gadgets);
+
+    // Then apply laser resistance modifiers (e.g., Helix/Hofstede reduce effective resistance)
+    const effectiveResistance = rockResistanceAfterGadgets * modifiers.resistance;
 
     // Power scaling: more lasers = proportionally more capacity
     const powerMultiplier = combinedPower / baselinePower;
@@ -88,5 +117,6 @@ window.FracturationParty = window.FracturationParty || {};
 window.FracturationParty.calculations = {
     calculateCombinedPower,
     calculateCombinedModifiers,
+    calculateRockResistance,
     calculateMaxMass
 };
