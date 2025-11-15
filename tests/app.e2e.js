@@ -19,21 +19,21 @@ test.describe('Star Citizen Mining Calculator', () => {
     test('should display initial configuration with one Prospector', async ({ page }) => {
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(1);
-        await expect(shipItems.first().locator('.ship-header label')).toContainText('Prospector #1');
+        await expect(shipItems.first().locator('.ship-header label').first()).toContainText('Ship #1');
     });
 
     test('should add a Prospector when clicking add button', async ({ page }) => {
-        await page.click('button:has-text("Add a Prospector")');
+        await page.click('button:has-text("Add a Ship")');
 
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(2);
-        await expect(shipItems.nth(1).locator('.ship-header label')).toContainText('Prospector #2');
+        await expect(shipItems.nth(1).locator('.ship-header label').first()).toContainText('Ship #2');
     });
 
     test('should remove a Prospector when clicking individual remove button', async ({ page }) => {
         // Add two prospectors first
-        await page.click('button:has-text("Add a Prospector")');
-        await page.click('button:has-text("Add a Prospector")');
+        await page.click('button:has-text("Add a Ship")');
+        await page.click('button:has-text("Add a Ship")');
 
         let shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(3);
@@ -57,7 +57,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
     test('should show remove buttons when multiple Prospectors exist', async ({ page }) => {
         // Add a second prospector
-        await page.click('button:has-text("Add a Prospector")');
+        await page.click('button:has-text("Add a Ship")');
 
         const shipItems = page.locator('.ship-item');
         await expect(shipItems).toHaveCount(2);
@@ -76,7 +76,7 @@ test.describe('Star Citizen Mining Calculator', () => {
     });
 
     test('should update capacity table when changing laser selection', async ({ page }) => {
-        const laserSelect = page.locator('#laser-0');
+        const laserSelect = page.locator('#laser-0-0');
 
         // Get initial max mass value for 0% resistance with Arbor (1850 power)
         const initialCell = page.locator('table tr').nth(1).locator('td').nth(1);
@@ -99,9 +99,11 @@ test.describe('Star Citizen Mining Calculator', () => {
     test('should show all laser options in dropdown', async ({ page }) => {
         // Get laserData from the page's context to make the test dynamic
         const laserData = await page.evaluate(() => window.FracturationParty.data.laserData);
-        const laserKeys = Object.keys(laserData);
 
-        const laserSelect = page.locator('#laser-0');
+        // Filter to only size 1 lasers (compatible with Prospector)
+        const laserKeys = Object.keys(laserData).filter(key => laserData[key].size === 1);
+
+        const laserSelect = page.locator('#laser-0-0');
         const options = laserSelect.locator('option');
 
         // 1. Check the count
@@ -143,13 +145,13 @@ test.describe('Star Citizen Mining Calculator', () => {
 
     test('should preserve laser selection when adding ships', async ({ page }) => {
         // Change first laser to Helix
-        await page.locator('#laser-0').selectOption('helix');
+        await page.locator('#laser-0-0').selectOption('helix');
 
         // Add another prospector
-        await page.click('button:has-text("Add a Prospector")');
+        await page.click('button:has-text("Add a Ship")');
 
         // First laser should still be Helix
-        const firstLaser = page.locator('#laser-0');
+        const firstLaser = page.locator('#laser-0-0');
         await expect(firstLaser).toHaveValue('helix');
     });
 
@@ -176,7 +178,7 @@ test.describe('Star Citizen Mining Calculator', () => {
         const singleShipMass = parseInt(singleShipText.replace(/[^\d]/g, ''));
 
         // Add second prospector
-        await page.click('button:has-text("Add a Prospector")');
+        await page.click('button:has-text("Add a Ship")');
         await page.waitForTimeout(100);
 
         // Get new mass for double Arbor at 30% resistance
@@ -190,7 +192,7 @@ test.describe('Star Citizen Mining Calculator', () => {
     });
 
     test('should update module description on change', async ({ page }) => {
-        const moduleSelect = page.locator('#module-0-0');
+        const moduleSelect = page.locator('#module-0-0-0');
         await moduleSelect.selectOption('rieger');
 
         // Get moduleData from the page's context to make the test dynamic
@@ -206,7 +208,7 @@ test.describe('Star Citizen Mining Calculator', () => {
         const effectColor = effect.type === 'con' ? 'red' : 'green';
         const expectedEffectHtml = `<span style="color:${effectColor};">${effect.text}</span>`;
 
-        const descriptionDiv = page.locator('#module-0-0 + .module-description');
+        const descriptionDiv = page.locator('#module-0-0-0 + .module-description');
         const innerHTML = await descriptionDiv.innerHTML();
 
         expect(innerHTML).toContain(expectedPwrHtml);
@@ -343,7 +345,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
     test('should show altered resistance column when laser has resistance modifier', async ({ page }) => {
         // Select Helix laser which has 0.7 resistance modifier (-30%)
-        const laserSelect = page.locator('#laser-0');
+        const laserSelect = page.locator('#laser-0-0');
         await laserSelect.selectOption('helix');
 
         // Wait for table to update
@@ -360,7 +362,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
     test('should calculate altered resistance correctly with laser modifier only', async ({ page }) => {
         // Select Helix laser (0.7 resistance = -30%)
-        const laserSelect = page.locator('#laser-0');
+        const laserSelect = page.locator('#laser-0-0');
         await laserSelect.selectOption('helix');
 
         await page.waitForTimeout(100);
@@ -381,7 +383,7 @@ test.describe('Star Citizen Mining Calculator', () => {
         await gadgetSelect.selectOption('sabir');
 
         // Select Helix laser (0.7 resistance = -30%)
-        const laserSelect = page.locator('#laser-0');
+        const laserSelect = page.locator('#laser-0-0');
         await laserSelect.selectOption('helix');
 
         await page.waitForTimeout(100);
@@ -399,7 +401,7 @@ test.describe('Star Citizen Mining Calculator', () => {
 
     test('should not show altered resistance column with Arbor laser and no gadgets', async ({ page }) => {
         // Arbor has resistance = 1.0 (no modifier)
-        const laserSelect = page.locator('#laser-0');
+        const laserSelect = page.locator('#laser-0-0');
         await expect(laserSelect).toHaveValue('arbor');
 
         // Table should only show 2 columns
