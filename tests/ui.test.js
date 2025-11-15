@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { generateModuleDescriptionHTML, gadgetData } from '../public/js/app.js';
-import { moduleData } from '../public/js/app.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ui, generateModuleDescriptionHTML, gadgetData, laserData, moduleData } from '../public/js/app.js';
+
+// Mock updateTable to prevent it from running and causing errors due to missing DOM elements in tests.
+vi.spyOn(ui, 'updateTable').mockImplementation(() => {});
 
 describe('generateModuleDescriptionHTML', () => {
     it('should return an empty string for "none" module', () => {

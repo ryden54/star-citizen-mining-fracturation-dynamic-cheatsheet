@@ -552,5 +552,11 @@ window.FracturationParty.ui = {
     onGadgetChange,
     generateModuleDescriptionHTML,
     updateTable,
-    initializeUI
+    initializeUI,
+    updateShipsUI,
+    // Test helpers
+    getShipModules: () => shipModules,
+    setShipModules: (newModules) => { shipModules = newModules; },
+    getShipCount: () => shipCount,
+    setShipCount: (newCount) => { shipCount = newCount; }
 };

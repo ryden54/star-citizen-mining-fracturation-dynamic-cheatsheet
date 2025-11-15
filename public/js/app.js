@@ -18,4 +18,5 @@ export const calculateRockResistance = window.FracturationParty.calculations.cal
 export const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
 
 // UI functions
+export const ui = window.FracturationParty.ui;
 export const generateModuleDescriptionHTML = window.FracturationParty.ui.generateModuleDescriptionHTML;
