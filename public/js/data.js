@@ -7,7 +7,7 @@ const laserData = {
         extractionPower: 1850,
         instability: 1.0,
         resistance: 1.0,
-        moduleSlots: 3,
+        moduleSlots: 1,
         name: 'Arbor MH1',
         description: 'Default laser. Trade-off: Balanced performance, no bonuses.'
     },
@@ -16,7 +16,7 @@ const laserData = {
         extractionPower: 1295,
         instability: 0.5,
         resistance: 0.7,  // -30% resistance bonus
-        moduleSlots: 3,
+        moduleSlots: 1,
         name: 'Hofstede S1',
         description: 'Specialized in fracturing dense materials. Trade-off: Lower extraction speed.'
     },
@@ -25,7 +25,7 @@ const laserData = {
         extractionPower: 1850,
         instability: 0.6,
         resistance: 0.7,   // -30% resistance bonus
-        moduleSlots: 3,
+        moduleSlots: 2,
         name: 'Helix I',
         description: 'High fracturing power for tough rocks. Trade-off: Consumes more power.'
     },
@@ -34,7 +34,7 @@ const laserData = {
         extractionPower: 1850,
         instability: 0.7,
         resistance: 1.0,
-        moduleSlots: 3,
+        moduleSlots: 1,
         name: 'Lancet MH1',
         description: 'Support laser that stabilizes fracturing. Trade-off: No power loss.'
     },
@@ -43,7 +43,7 @@ const laserData = {
         extractionPower: 2220,
         instability: 1.20, // +20% inert materials
         resistance: 0.55,  // -45% resistance
-        moduleSlots: 3,
+        moduleSlots: 0,
         name: 'Klein-S1',
         description: 'Excellent for very dense rocks. Trade-off: Increased inert materials.'
     },
@@ -52,7 +52,7 @@ const laserData = {
         extractionPower: 2775,
         instability: 1.20, // +20% inert materials
         resistance: 1.10,  // +10% resistance
-        moduleSlots: 3,
+        moduleSlots: 2,
         name: 'Impact I',
         description: 'High extraction speed. Trade-off: Increased rock resistance and inert materials.'
     }

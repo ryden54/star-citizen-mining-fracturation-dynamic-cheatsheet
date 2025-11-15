@@ -265,14 +265,20 @@ function onLaserChange(shipIndex, focusedId = null) {
  * @param {string|null} focusedId - ID of the element to re-focus
  */
 function onModuleChange(shipIndex, slotIndex, focusedId = null) {
+    const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
+    const maxModuleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
+
+    if (slotIndex >= maxModuleSlots) {
+        throw new Error(`Attempted to assign module to slot ${slotIndex} for ship ${shipIndex}, but laser "${laserKey}" only supports ${maxModuleSlots} module slots.`);
+    }
+
     const moduleSelect = document.getElementById(`module-${shipIndex}-${slotIndex}`);
     focusedId = focusedId || moduleSelect.id; // Use current element's ID if not provided
 
     if (moduleSelect) {
         if (!shipModules[shipIndex]) {
-            const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
-            const moduleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
-            shipModules[shipIndex] = Array(moduleSlots).fill('none');
+            // This block should ideally not be reached if UI is correctly built
+            shipModules[shipIndex] = Array(maxModuleSlots).fill('none');
         }
         shipModules[shipIndex][slotIndex] = moduleSelect.value;
     }

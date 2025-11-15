@@ -42,6 +42,118 @@ describe('generateModuleDescriptionHTML', () => {
     });
 });
 
+describe('Ship UI functions', () => {
+    beforeEach(() => {
+        // Reset DOM
+        document.body.innerHTML = `
+            <div id="ships-container"></div>
+            <div id="capacity-table"></div>
+        `;
+
+        // Provide the necessary data on the window object for the UI functions to use
+        window.FracturationParty.data = { laserData, moduleData, gadgetData };
+
+        // Initialize the UI, which sets up the initial ship count and modules
+        ui.initializeUI();
+
+        // After initialization, ensure ship count is 1
+        ui.setShipCount(1);
+    });
+
+    it('removeShip should preserve modules of ships with index < removed index', () => {
+        // Add two more ships to reach a total of 3
+        ui.addShip(); // Ship 2
+        ui.addShip(); // Ship 3
+        expect(ui.getShipCount()).toBe(3);
+
+        // Manually set modules for each ship to have a known state
+        ui.setShipModules({
+            0: ['fltr'],
+            1: ['rieger'],
+            2: ['vaux']
+        });
+        ui.updateShipsUI(); // Update UI to reflect the new module state
+
+        // Remove the last ship (index 2)
+        ui.removeShip(2);
+
+        // Verify that the ship count is now 2
+        expect(ui.getShipCount()).toBe(2);
+
+        // Verify that the modules of ship 0 and ship 1 are preserved.
+        // The test for `else if (shipIndex < index)` is triggered here, as indices 0 and 1 are less than 2.
+        const currentModules = ui.getShipModules();
+        expect(currentModules[0]).toEqual(['fltr']);
+        expect(currentModules[1]).toEqual(['rieger']);
+        
+        // Ensure the DOM is also updated and the third ship is gone
+        expect(document.getElementById('laser-0')).not.toBeNull();
+        expect(document.getElementById('laser-1')).not.toBeNull();
+        expect(document.getElementById('laser-2')).toBeNull();
+    });
+
+    it('onModuleChange should create modules array if it does not exist', () => {
+        // We start with one ship from initializeUI, and its module data exists.
+        // Manually set an inconsistent state where shipModules is empty
+        ui.setShipModules({});
+        expect(ui.getShipModules()).toEqual({});
+
+        // The DOM for ship 0 still exists. Find a module select and change its value.
+        const moduleSelect = document.getElementById('module-0-0');
+        expect(moduleSelect).not.toBeNull();
+        moduleSelect.value = 'fltr';
+
+        // Trigger the change handler. This should execute the `if (!shipModules[shipIndex])` block.
+        ui.onModuleChange(0, 0);
+
+        // Verify that the shipModules object was created for ship 0
+        const newShipModules = ui.getShipModules();
+        expect(newShipModules[0]).toBeDefined();
+        // The new array should be initialized with 'none' for all slots, then the selected value is set.
+        // Arbor laser has 1 module slot.
+        expect(newShipModules[0]).toEqual(['fltr']);
+    });
+
+    it('removeShip should correctly re-index modules when removing first ship', () => {
+        // Add two more ships to reach a total of 3
+        ui.addShip(); // Ship 2
+        ui.addShip(); // Ship 3
+        expect(ui.getShipCount()).toBe(3);
+
+        // Manually set modules for each ship to have a known state
+        ui.setShipModules({
+            0: ['fltr'],
+            1: ['rieger'],
+            2: ['vaux']
+        });
+        ui.updateShipsUI(); // Update UI to reflect the new module state
+
+        // Remove the first ship (index 0)
+        ui.removeShip(0);
+
+        // Verify that the ship count is now 2
+        expect(ui.getShipCount()).toBe(2);
+
+        // Verify that the modules of the remaining ships are correctly re-indexed.
+        // The test for `if (shipIndex > index)` is triggered here.
+        const currentModules = ui.getShipModules();
+        expect(currentModules[0]).toEqual(['rieger']); // old ship 1 is now ship 0
+        expect(currentModules[1]).toEqual(['vaux']);   // old ship 2 is now ship 1
+    });
+
+    it('onModuleChange should throw an error if slotIndex is out of bounds', () => {
+        // Set up a ship with a laser that has a known number of module slots (e.g., Arbor has 1)
+        // The UI is initialized with one ship and Arbor laser, so ship 0 has 1 slot.
+        const shipIndex = 0;
+        const invalidSlotIndex = 1; // Arbor only has slot 0
+
+        // Expect the function call to throw an error
+        expect(() => ui.onModuleChange(shipIndex, invalidSlotIndex)).toThrow(
+            `Attempted to assign module to slot ${invalidSlotIndex} for ship ${shipIndex}, but laser "arbor" only supports 1 module slots.`
+        );
+    });
+});
+
 describe('Gadget UI Functions', () => {
     beforeEach(() => {
         // Reset DOM
