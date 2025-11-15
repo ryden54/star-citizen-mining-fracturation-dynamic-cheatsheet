@@ -19,20 +19,20 @@ describe('generateModuleDescriptionHTML', () => {
         expect(html).not.toContain('Fract. Pwr');
         expect(html).toContain('Extract Pwr: <span style="color:red;">-15%</span>');
         expect(html).toContain('<span style="color:green;">Filters inert materials</span>');
-        expect(html).toContain('<span style="color:green;">Optimal Window: +15%</span>');
+        expect(html).toContain('<span style="color:green;">Opt. window: +15%</span>');
     });
 
     it('should correctly generate HTML for a module with a power bonus and a con effect', () => {
         const html = generateModuleDescriptionHTML(moduleData.rieger);
         expect(html).toContain('Fract. Pwr: <span style="color:green;">+15%</span>');
-        expect(html).toContain('<span style="color:red;">Optimal Window: -10%</span>');
+        expect(html).toContain('<span style="color:red;">Opt. window: -10%</span>');
     });
 
     it('should correctly generate HTML for a module with only an extraction power bonus and a con effect', () => {
         const html = generateModuleDescriptionHTML(moduleData.vaux);
         expect(html).not.toContain('Fract. Pwr');
         expect(html).toContain('Extract Pwr: <span style="color:green;">+15%</span>');
-        expect(html).toContain('<span style="color:red;">Optimal Charge Rate: -20%</span>');
+        expect(html).toContain('<span style="color:red;">Opt. charge rate: -20%</span>');
     });
 
     it('should correctly generate HTML for a module with both power penalties and bonuses', () => {

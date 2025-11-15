@@ -107,24 +107,29 @@ test.describe('Star Citizen Mining Calculator', () => {
         // 1. Check the count
         await expect(options).toHaveCount(laserKeys.length);
 
-        // 2. Check the text of each option
+        // 2. Check the text of each option (order: Power, Resistance, Instability)
         const arborFracturingPower = laserData['arbor'].fracturingPower;
         for (let i = 0; i < laserKeys.length; i++) {
             const key = laserKeys[i];
             const laser = laserData[key];
             const descriptionParts = [];
 
+            // 1. Fracturing Power first
             if (key !== 'arbor') {
                 const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-                descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+                descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
             }
-            if (laser.instability !== 1.0) {
-                const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
-            }
+
+            // 2. Resistance second (affects fracturation)
             if (laser.resistance !== 1.0) {
                 const resVar = (laser.resistance - 1.0) * 100;
                 descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+            }
+
+            // 3. Instability/optimal window third (quality of life)
+            if (laser.instability !== 1.0) {
+                const instVar = (laser.instability - 1.0) * 100;
+                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let expectedText = laser.name;
@@ -234,20 +239,26 @@ test.describe('Star Citizen Mining Calculator', () => {
         // Check that options have descriptions
         const optionsText = await gadgetSelect.locator('option').allTextContents();
 
-        // Sabir should have description with rock resistance
+        // Sabir should have description with resistance and instability
         const sabirOption = optionsText.find(text => text.includes('Sabir'));
         expect(sabirOption).toBeTruthy();
-        expect(sabirOption).toContain('Rock Res');
+        expect(sabirOption).toContain('Res:');
+        expect(sabirOption).toContain('Instability:');
 
-        // OptiMax should have description
+        // OptiMax should have description with resistance
         const optimaxOption = optionsText.find(text => text.includes('OptiMax'));
         expect(optimaxOption).toBeTruthy();
-        expect(optimaxOption).toContain('Rock Res');
+        expect(optimaxOption).toContain('Res:');
 
-        // Stalwart should have a description (Opt. Window)
+        // Stalwart should have a description (Opt. window rate)
         const stalwartOption = optionsText.find(text => text.includes('Stalwart'));
         expect(stalwartOption).toBeTruthy();
-        expect(stalwartOption).toContain('Opt. Window');
+        expect(stalwartOption).toContain('Opt. window rate');
+
+        // WaveShift should have a description (Opt. window size)
+        const waveshiftOption = optionsText.find(text => text.includes('WaveShift'));
+        expect(waveshiftOption).toBeTruthy();
+        expect(waveshiftOption).toContain('Opt. window size');
     });
 
     test('should remove a gadget when clicking remove button', async ({ page }) => {

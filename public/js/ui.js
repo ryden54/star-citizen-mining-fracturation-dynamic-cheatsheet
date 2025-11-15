@@ -62,18 +62,25 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
     for (const laserKey in laserData) {
         const laser = laserData[laserKey];
         const descriptionParts = [];
+
+        // 1. Fracturing Power FIRST (most important)
         if (laserKey !== 'arbor') {
             const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-            descriptionParts.push(`${variation > 0 ? '+' : ''}${variation.toFixed(0)}% Pwr`);
+            descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
         }
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            descriptionParts.push(`Opt. Window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
-        }
+
+        // 2. Resistance SECOND (directly affects fracturation)
         if (laser.resistance !== 1.0) {
             const resVar = (laser.resistance - 1.0) * 100;
             descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
         }
+
+        // 3. Instability/optimal window THIRD (quality of life)
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+        }
+
         let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
         laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
     }
@@ -85,13 +92,44 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         if (!modulesByManufacturer[module.manufacturer]) {
             modulesByManufacturer[module.manufacturer] = [];
         }
-        modulesByManufacturer[module.manufacturer].push({ key, ...module });
+
+        // Build abbreviated description showing key modifiers
+        const descriptionParts = [];
+
+        // Fracturing Power FIRST (most important for fracturation)
+        const fracturingVar = (module.fracturingPowerModifier - 1.0) * 100;
+        if (fracturingVar !== 0) {
+            descriptionParts.push(`Fract. Pwr: ${fracturingVar > 0 ? '+' : ''}${fracturingVar.toFixed(0)}%`);
+        }
+
+        // Extraction Power second (still related to mining efficiency)
+        const extractionVar = (module.extractionPowerModifier - 1.0) * 100;
+        if (extractionVar !== 0) {
+            descriptionParts.push(`Extr. Pwr: ${extractionVar > 0 ? '+' : ''}${extractionVar.toFixed(0)}%`);
+        }
+
+        // Other effects from the effects array (Opt. window, etc.)
+        module.effects.forEach(effect => {
+            if (effect.text.includes('Opt. window:')) {
+                descriptionParts.push(effect.text);
+            } else if (effect.text.includes('Opt. charge rate:')) {
+                descriptionParts.push(effect.text);
+            }
+        });
+
+        const fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
+
+        modulesByManufacturer[module.manufacturer].push({
+            key,
+            ...module,
+            fullDescription
+        });
     }
     let moduleOptionsHTML = '<option value="none">(None)</option>';
     for (const manufacturer in modulesByManufacturer) {
         moduleOptionsHTML += `<optgroup label="${manufacturer}">`;
         modulesByManufacturer[manufacturer].forEach(module => {
-            moduleOptionsHTML += `<option value="${module.key}">${module.name}</option>`;
+            moduleOptionsHTML += `<option value="${module.key}">${module.name}${module.fullDescription}</option>`;
         });
         moduleOptionsHTML += `</optgroup>`;
     }
@@ -120,21 +158,28 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         const moduleSlots = laser.moduleSlots;
 
         const statsParts = [];
+
+        // 1. Fracturing Power FIRST (most important for fracturation)
         if (laserKey !== 'arbor') {
             const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
             const pwrColor = variation > 0 ? 'green' : 'red';
-            statsParts.push(`Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
+            statsParts.push(`Fract. Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
         }
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            const instColor = instVar > 0 ? 'green' : 'red';
-            statsParts.push(`Opt. Window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
-        }
+
+        // 2. Resistance SECOND (directly affects fracturation calculations)
         if (laser.resistance !== 1.0) {
             const resVar = (laser.resistance - 1.0) * 100;
             const resColor = resVar < 0 ? 'green' : 'red';
             statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
         }
+
+        // 3. Instability/optimal window THIRD (quality of life)
+        if (laser.instability !== 1.0) {
+            const instVar = (laser.instability - 1.0) * 100;
+            const instColor = instVar > 0 ? 'green' : 'red';
+            statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+        }
+
         const statsHTML = statsParts.join(', ');
 
         let modulesHTML = '';
@@ -292,19 +337,19 @@ function updateGadgetsUI(focusedElementId = null) {
         const descriptionParts = [];
         if (gadget.rockResistance !== 0) {
             const resVar = gadget.rockResistance * 100;
-            descriptionParts.push(`Rock Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+            descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
         }
         if (gadget.rockInstability !== 0) {
             const instVar = gadget.rockInstability * 100;
-            descriptionParts.push(`Rock Inst: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+            descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
         }
 
         // For gadgets without rock modifiers, show their main effect
         if (descriptionParts.length === 0) {
             if (key === 'stalwart') {
-                descriptionParts.push('Opt. Window Rate +50%');
+                descriptionParts.push('Opt. window rate: +50%');
             } else if (key === 'waveshift') {
-                descriptionParts.push('Opt. Window +100%');
+                descriptionParts.push('Opt. window size: +100%');
             }
         }
 

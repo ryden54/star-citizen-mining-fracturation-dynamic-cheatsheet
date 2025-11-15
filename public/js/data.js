@@ -68,19 +68,19 @@ const moduleData = {
     'fltr': { name: 'FLTR', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.85, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
     'fltr-l': { name: 'FLTR-L', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.90, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
     'fltr-xl': { name: 'FLTR-XL', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 0.95, extractionPowerModifier: 1.0, effects: [{ text: 'Filters inert materials', type: 'pro' }] },
-    'xtr': { name: 'XTR', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.85, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Optimal Window: +15%', type: 'pro' }] },
-    'xtr-l': { name: 'XTR-L', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.90, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Optimal Window: +22%', type: 'pro' }] },
+    'xtr': { name: 'XTR', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.85, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Opt. window: +15%', type: 'pro' }] },
+    'xtr-l': { name: 'XTR-L', manufacturer: 'Greycat Industrial', fracturingPowerModifier: 1.0, extractionPowerModifier: 0.90, effects: [{ text: 'Filters inert materials', type: 'pro' }, { text: 'Opt. window: +22%', type: 'pro' }] },
     // Thermyte Concern
     'focus': { name: 'Focus', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.85, extractionPowerModifier: 1.30, effects: [] },
     'focus-ii': { name: 'Focus II', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.90, extractionPowerModifier: 1.37, effects: [] },
     'focus-iii': { name: 'Focus III', manufacturer: 'Thermyte Concern', fracturingPowerModifier: 0.95, extractionPowerModifier: 1.40, effects: [] },
     // Shubin Interstellar
-    'rieger': { name: 'Rieger', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.15, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -10%', type: 'con' }] },
-    'rieger-c2': { name: 'Rieger-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.20, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -3%', type: 'con' }] },
-    'rieger-c3': { name: 'Rieger-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.25, extractionPowerModifier: 1.0, effects: [{ text: 'Optimal Window: -1%', type: 'con' }] },
-    'vaux': { name: 'Vaux', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.15, effects: [{ text: 'Optimal Charge Rate: -20%', type: 'con' }] },
-    'vaux-c2': { name: 'Vaux-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.20, effects: [{ text: 'Optimal Charge Rate: -15%', type: 'con' }] },
-    'vaux-c3': { name: 'Vaux-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.25, effects: [{ text: 'Optimal Charge Rate: -5%', type: 'con' }] }
+    'rieger': { name: 'Rieger', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.15, extractionPowerModifier: 1.0, effects: [{ text: 'Opt. window: -10%', type: 'con' }] },
+    'rieger-c2': { name: 'Rieger-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.20, extractionPowerModifier: 1.0, effects: [{ text: 'Opt. window: -3%', type: 'con' }] },
+    'rieger-c3': { name: 'Rieger-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.25, extractionPowerModifier: 1.0, effects: [{ text: 'Opt. window: -1%', type: 'con' }] },
+    'vaux': { name: 'Vaux', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.15, effects: [{ text: 'Opt. charge rate: -20%', type: 'con' }] },
+    'vaux-c2': { name: 'Vaux-C2', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.20, effects: [{ text: 'Opt. charge rate: -15%', type: 'con' }] },
+    'vaux-c3': { name: 'Vaux-C3', manufacturer: 'Shubin Interstellar', fracturingPowerModifier: 1.0, extractionPowerModifier: 1.25, effects: [{ text: 'Opt. charge rate: -5%', type: 'con' }] }
 };
 
 // Mining gadgets data
@@ -93,8 +93,8 @@ const gadgetData = {
         rockInstability: -0.70,    // -70% rock instability
         rockResistance: 0.10,      // +10% rock resistance
         effects: [
-            { text: 'Rock Instability: -70%', type: 'pro' },
             { text: 'Rock Resistance: +10%', type: 'con' },
+            { text: 'Rock Instability: -70%', type: 'pro' },
             { text: 'Cluster Modifier: +30%', type: 'pro' }
         ]
     },
@@ -105,8 +105,8 @@ const gadgetData = {
         rockResistance: 0.0,       // No resistance change
         effects: [
             { text: 'Rock Instability: -40%', type: 'pro' },
-            { text: 'Optimal Window Size: +50%', type: 'pro' },
-            { text: 'Optimal Window Rate: +100%', type: 'pro' },
+            { text: 'Opt. window size: +50%', type: 'pro' },
+            { text: 'Opt. window rate: +100%', type: 'pro' },
             { text: 'Cluster Modifier: -20%', type: 'con' }
         ]
     },
@@ -118,7 +118,7 @@ const gadgetData = {
         effects: [
             { text: 'Rock Resistance: -30%', type: 'pro' },
             { text: 'Cluster Modifier: +60%', type: 'pro' },
-            { text: 'Optimal Window Size: -30%', type: 'con' }
+            { text: 'Opt. window size: -30%', type: 'con' }
         ]
     },
     'sabir': {
@@ -127,9 +127,9 @@ const gadgetData = {
         rockInstability: 0.15,     // +15% rock instability
         rockResistance: -0.50,     // -50% rock resistance
         effects: [
-            { text: 'Optimal Window Size: +50%', type: 'pro' },
             { text: 'Rock Resistance: -50%', type: 'pro' },
-            { text: 'Rock Instability: +15%', type: 'con' }
+            { text: 'Rock Instability: +15%', type: 'con' },
+            { text: 'Opt. window size: +50%', type: 'pro' }
         ]
     },
     'stalwart': {
@@ -138,10 +138,10 @@ const gadgetData = {
         rockInstability: 0.0,      // No rock instability change
         rockResistance: 0.0,       // No resistance change
         effects: [
-            { text: 'Optimal Window Rate: +50%', type: 'pro' },
+            { text: 'Opt. window rate: +50%', type: 'pro' },
             { text: 'Cluster Modifier: +30%', type: 'pro' },
             { text: 'Laser Instability: +15%', type: 'con' },
-            { text: 'Optimal Window Size: -30%', type: 'con' }
+            { text: 'Opt. window size: -30%', type: 'con' }
         ]
     },
     'waveshift': {
@@ -150,9 +150,9 @@ const gadgetData = {
         rockInstability: 0.0,      // No rock instability change
         rockResistance: 0.0,       // No resistance change
         effects: [
-            { text: 'Optimal Window Size: +100%', type: 'pro' },
+            { text: 'Opt. window size: +100%', type: 'pro' },
             { text: 'Laser Instability: -35%', type: 'pro' },
-            { text: 'Optimal Window Rate: -30%', type: 'con' }
+            { text: 'Opt. window rate: -30%', type: 'con' }
         ]
     }
 };
