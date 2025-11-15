@@ -1,0 +1,1 @@
+All guidelines to follow are in AGENTS.md

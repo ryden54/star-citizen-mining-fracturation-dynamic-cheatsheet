@@ -123,10 +123,11 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Allows pla
 5. **Update test exports** - If adding new functions, export them in `public/js/app.js` for testing
 
 **Before committing:**
-1. **ALWAYS ask permission before committing** - The user must review and approve changes
-2. **Explain what was done** - Summarize the changes clearly
-3. **Wait for confirmation** - Never commit without explicit user approval
-4. **Keep commits cohesive** - Feature code and its tests must be in the same commit
+1. **Co-author all commits** - All commits must be co-authored. The main author must be the current git user, and the co-author must be the AI agent that performed the work (e.g., `Co-authored-by: Gemini <gemini@google.com>`).
+2. **ALWAYS ask permission before committing** - The user must review and approve changes
+3. **Explain what was done** - Summarize the changes clearly
+4. **Wait for confirmation** - Never commit without explicit user approval
+5. **Keep commits cohesive** - Feature code and its tests must be in the same commit
    - Do NOT create separate commits for "add feature", "fix tests", "add missing tests"
    - Do NOT pollute git history with successive fix commits unless necessary/pertinent
    - Use `git commit --amend` to update the last commit when adding tests or fixes
