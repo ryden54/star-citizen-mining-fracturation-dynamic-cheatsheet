@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ui, generateModuleDescriptionHTML, gadgetData, laserData, moduleData } from '../public/js/app.js';
+import { ui, generateModuleDescriptionHTML, shipData, gadgetData, laserData, moduleData } from '../public/js/app.js';
 
 // Mock updateTable to prevent it from running and causing errors due to missing DOM elements in tests.
 vi.spyOn(ui, 'updateTable').mockImplementation(() => {});
@@ -53,7 +53,7 @@ describe('Ship UI functions', () => {
         `;
 
         // Provide the necessary data on the window object for the UI functions to use
-        window.FracturationParty.data = { laserData, moduleData, gadgetData };
+        window.FracturationParty.data = { shipData, laserData, moduleData, gadgetData };
 
         // Initialize the UI, which sets up the initial ship count and modules
         ui.initializeUI();
@@ -64,16 +64,16 @@ describe('Ship UI functions', () => {
 
     it('removeShip should preserve modules of ships with index < removed index', () => {
         // Add two more ships to reach a total of 3
+        ui.addShip(); // Ship 1
         ui.addShip(); // Ship 2
-        ui.addShip(); // Ship 3
         expect(ui.getShipCount()).toBe(3);
 
-        // Manually set modules for each ship to have a known state
-        ui.setShipModules({
-            0: ['fltr'],
-            1: ['rieger'],
-            2: ['vaux']
-        });
+        // Set ships with proper structure using the new setShips API
+        ui.setShips([
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['fltr'] }] },
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['rieger'] }] },
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['vaux'] }] }
+        ]);
         ui.updateShipsUI(); // Update UI to reflect the new module state
 
         // Remove the last ship (index 2)
@@ -87,47 +87,52 @@ describe('Ship UI functions', () => {
         const currentModules = ui.getShipModules();
         expect(currentModules[0]).toEqual(['fltr']);
         expect(currentModules[1]).toEqual(['rieger']);
-        
+
         // Ensure the DOM is also updated and the third ship is gone
-        expect(document.getElementById('laser-0')).not.toBeNull();
-        expect(document.getElementById('laser-1')).not.toBeNull();
-        expect(document.getElementById('laser-2')).toBeNull();
+        // Use new ID scheme: laser-{shipIndex}-{laserIndex}
+        expect(document.getElementById('laser-0-0')).not.toBeNull();
+        expect(document.getElementById('laser-1-0')).not.toBeNull();
+        expect(document.getElementById('laser-2-0')).toBeNull();
     });
 
     it('onModuleChange should create modules array if it does not exist', () => {
         // We start with one ship from initializeUI, and its module data exists.
-        // Manually set an inconsistent state where shipModules is empty
-        ui.setShipModules({});
-        expect(ui.getShipModules()).toEqual({});
+        // Manually set a proper state with initialized modules array
+        ui.setShips([
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['none'] }] }
+        ]);
+        ui.updateShipsUI();
 
         // The DOM for ship 0 still exists. Find a module select and change its value.
-        const moduleSelect = document.getElementById('module-0-0');
+        // Use new ID scheme: module-{shipIndex}-{laserIndex}-{slotIndex}
+        const moduleSelect = document.getElementById('module-0-0-0');
         expect(moduleSelect).not.toBeNull();
         moduleSelect.value = 'fltr';
 
-        // Trigger the change handler. This should execute the `if (!shipModules[shipIndex])` block.
-        ui.onModuleChange(0, 0);
+        // Trigger the change handler with laserIndex parameter.
+        // onModuleChange(shipIndex, laserIndex, slotIndex, focusedId)
+        ui.onModuleChange(0, 0, 0);
 
-        // Verify that the shipModules object was created for ship 0
+        // Verify that the module was updated in ship 0, laser 0
         const newShipModules = ui.getShipModules();
         expect(newShipModules[0]).toBeDefined();
-        // The new array should be initialized with 'none' for all slots, then the selected value is set.
+        // The selected value should be set.
         // Arbor laser has 1 module slot.
         expect(newShipModules[0]).toEqual(['fltr']);
     });
 
     it('removeShip should correctly re-index modules when removing first ship', () => {
         // Add two more ships to reach a total of 3
+        ui.addShip(); // Ship 1
         ui.addShip(); // Ship 2
-        ui.addShip(); // Ship 3
         expect(ui.getShipCount()).toBe(3);
 
-        // Manually set modules for each ship to have a known state
-        ui.setShipModules({
-            0: ['fltr'],
-            1: ['rieger'],
-            2: ['vaux']
-        });
+        // Set ships with proper structure using the new setShips API
+        ui.setShips([
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['fltr'] }] },
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['rieger'] }] },
+            { type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['vaux'] }] }
+        ]);
         ui.updateShipsUI(); // Update UI to reflect the new module state
 
         // Remove the first ship (index 0)
@@ -147,11 +152,21 @@ describe('Ship UI functions', () => {
         // Set up a ship with a laser that has a known number of module slots (e.g., Arbor has 1)
         // The UI is initialized with one ship and Arbor laser, so ship 0 has 1 slot.
         const shipIndex = 0;
+        const laserIndex = 0; // For Prospector, always use laser 0
         const invalidSlotIndex = 1; // Arbor only has slot 0
 
+        // Create a mock DOM element for the invalid slot
+        // This is needed because onModuleChange tries to read the value before validating
+        const mockSelect = document.createElement('select');
+        mockSelect.id = `module-${shipIndex}-${laserIndex}-${invalidSlotIndex}`;
+        mockSelect.value = 'rieger';
+        document.getElementById('ships-container').appendChild(mockSelect);
+
         // Expect the function call to throw an error
-        expect(() => ui.onModuleChange(shipIndex, invalidSlotIndex)).toThrow(
-            `Attempted to assign module to slot ${invalidSlotIndex} for ship ${shipIndex}, but laser "arbor" only supports 1 module slots.`
+        // onModuleChange(shipIndex, laserIndex, slotIndex, focusedId)
+        // Updated error message to include "laser ${laserIndex}"
+        expect(() => ui.onModuleChange(shipIndex, laserIndex, invalidSlotIndex)).toThrow(
+            `Attempted to assign module to slot ${invalidSlotIndex} for ship ${shipIndex} laser ${laserIndex}, but laser "arbor" only supports 1 module slots.`
         );
     });
 });
@@ -277,6 +292,322 @@ describe('Gadget UI Functions', () => {
                 text.toLowerCase().includes('instability') || text.toLowerCase().includes('inst')
             );
             expect(hasInstabilityEffect).toBe(true);
+        });
+    });
+});
+
+describe('MOLE Ship Support', () => {
+    beforeEach(() => {
+        // Reset DOM
+        document.body.innerHTML = `
+            <div id="ships-container"></div>
+            <div id="capacity-table"></div>
+        `;
+        window.FracturationParty.data = { shipData, laserData, moduleData, gadgetData };
+    });
+
+    describe('createShip', () => {
+        it('should create prospector with 1 Size 1 laser and correct default', () => {
+            const ship = ui.createShip('prospector');
+
+            expect(ship.type).toBe('prospector');
+            expect(ship.lasers).toHaveLength(1);
+            expect(ship.lasers[0].laserType).toBe('arbor'); // Default S1 laser
+            expect(ship.lasers[0].modules).toHaveLength(1); // Arbor has 1 module slot
+            expect(ship.lasers[0].modules[0]).toBe('none');
+        });
+
+        it('should create MOLE with 3 Size 2 lasers and correct default', () => {
+            const ship = ui.createShip('mole');
+
+            expect(ship.type).toBe('mole');
+            expect(ship.lasers).toHaveLength(3);
+
+            // All 3 lasers should be Arbor MH2 (default S2 laser)
+            ship.lasers.forEach(laser => {
+                expect(laser.laserType).toBe('arbor-mh2');
+                expect(laser.modules).toHaveLength(2); // Arbor MH2 has 2 module slots
+                expect(laser.modules).toEqual(['none', 'none']);
+            });
+        });
+
+        it('should create ships with correct number of module slots for each laser', () => {
+            const prospector = ui.createShip('prospector');
+            const arborSlots = laserData['arbor'].moduleSlots;
+            expect(prospector.lasers[0].modules).toHaveLength(arborSlots);
+
+            const mole = ui.createShip('mole');
+            const arborMH2Slots = laserData['arbor-mh2'].moduleSlots;
+            mole.lasers.forEach(laser => {
+                expect(laser.modules).toHaveLength(arborMH2Slots);
+            });
+        });
+    });
+
+    describe('getCompatibleLasers', () => {
+        it('should return only Size 1 lasers for prospector', () => {
+            const compatibleLasers = ui.getCompatibleLasers('prospector');
+
+            // All returned lasers must be size 1
+            Object.values(compatibleLasers).forEach(laser => {
+                expect(laser.size).toBe(1);
+            });
+
+            // Should include known S1 lasers
+            expect(compatibleLasers['arbor']).toBeDefined();
+            expect(compatibleLasers['helix']).toBeDefined();
+            expect(compatibleLasers['hofstede']).toBeDefined();
+
+            // Should NOT include S2 lasers
+            expect(compatibleLasers['arbor-mh2']).toBeUndefined();
+            expect(compatibleLasers['helix-ii']).toBeUndefined();
+        });
+
+        it('should return only Size 2 lasers for MOLE', () => {
+            const compatibleLasers = ui.getCompatibleLasers('mole');
+
+            // All returned lasers must be size 2
+            Object.values(compatibleLasers).forEach(laser => {
+                expect(laser.size).toBe(2);
+            });
+
+            // Should include known S2 lasers
+            expect(compatibleLasers['arbor-mh2']).toBeDefined();
+            expect(compatibleLasers['lancet-mh2']).toBeDefined();
+            expect(compatibleLasers['hofstede-s2']).toBeDefined();
+            expect(compatibleLasers['helix-ii']).toBeDefined();
+
+            // Should NOT include S1 lasers
+            expect(compatibleLasers['arbor']).toBeUndefined();
+            expect(compatibleLasers['helix']).toBeUndefined();
+        });
+
+        it('should return non-empty laser sets for both ship types', () => {
+            const prospectorLasers = ui.getCompatibleLasers('prospector');
+            const moleLasers = ui.getCompatibleLasers('mole');
+
+            expect(Object.keys(prospectorLasers).length).toBeGreaterThan(0);
+            expect(Object.keys(moleLasers).length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('onShipTypeChange', () => {
+        beforeEach(() => {
+            ui.initializeUI();
+            ui.setShipCount(1);
+            ui.setShips([ui.createShip('prospector')]);
+            ui.updateShipsUI();
+        });
+
+        it('should convert prospector to MOLE when type changes', () => {
+            // Setup: verify we start with a prospector
+            const initialShips = ui.getShips();
+            expect(initialShips[0].type).toBe('prospector');
+            expect(initialShips[0].lasers).toHaveLength(1);
+
+            // Simulate changing the ship type select
+            const shipTypeSelect = document.getElementById('ship-type-0');
+            expect(shipTypeSelect).not.toBeNull();
+            shipTypeSelect.value = 'mole';
+
+            // Trigger the change
+            ui.onShipTypeChange(0);
+
+            // Verify the ship is now a MOLE
+            const updatedShips = ui.getShips();
+            expect(updatedShips[0].type).toBe('mole');
+            expect(updatedShips[0].lasers).toHaveLength(3);
+            expect(updatedShips[0].lasers[0].laserType).toBe('arbor-mh2');
+        });
+
+        it('should convert MOLE to prospector when type changes', () => {
+            // Setup: Start with a MOLE
+            ui.setShips([ui.createShip('mole')]);
+            ui.updateShipsUI();
+
+            const initialShips = ui.getShips();
+            expect(initialShips[0].type).toBe('mole');
+            expect(initialShips[0].lasers).toHaveLength(3);
+
+            // Simulate changing the ship type select
+            const shipTypeSelect = document.getElementById('ship-type-0');
+            shipTypeSelect.value = 'prospector';
+
+            // Trigger the change
+            ui.onShipTypeChange(0);
+
+            // Verify the ship is now a prospector
+            const updatedShips = ui.getShips();
+            expect(updatedShips[0].type).toBe('prospector');
+            expect(updatedShips[0].lasers).toHaveLength(1);
+            expect(updatedShips[0].lasers[0].laserType).toBe('arbor');
+        });
+
+        it('should reset lasers and modules when ship type changes', () => {
+            // Setup: prospector with custom laser/modules
+            ui.setShips([{
+                type: 'prospector',
+                lasers: [{ laserType: 'helix', modules: ['rieger'] }]
+            }]);
+            ui.updateShipsUI();
+
+            // Change to MOLE
+            const shipTypeSelect = document.getElementById('ship-type-0');
+            shipTypeSelect.value = 'mole';
+            ui.onShipTypeChange(0);
+
+            // Verify new default configuration
+            const updatedShips = ui.getShips();
+            expect(updatedShips[0].lasers[0].laserType).toBe('arbor-mh2');
+            expect(updatedShips[0].lasers[0].modules).toEqual(['none', 'none']); // Arbor MH2 has 2 module slots
+        });
+    });
+
+    describe('onLaserChange with un-maned laser', () => {
+        beforeEach(() => {
+            ui.initializeUI();
+            ui.setShipCount(1);
+            ui.setShips([ui.createShip('mole')]);
+            ui.updateShipsUI();
+        });
+
+        it('should handle un-maned laser type correctly', () => {
+            // Setup: MOLE with 3 lasers
+            const initialShips = ui.getShips();
+            expect(initialShips[0].lasers).toHaveLength(3);
+
+            // Simulate changing laser 2 to un-maned
+            const laserSelect = document.getElementById('laser-0-2');
+            expect(laserSelect).not.toBeNull();
+            laserSelect.value = 'un-maned';
+
+            // Trigger the change
+            ui.onLaserChange(0, 2);
+
+            // Verify laser is un-maned
+            const updatedShips = ui.getShips();
+            expect(updatedShips[0].lasers[2].laserType).toBe('un-maned');
+            expect(updatedShips[0].lasers[2].modules).toEqual([]);
+        });
+
+        it('should allow switching from un-maned back to regular laser', () => {
+            // Setup: Set laser 1 to un-maned
+            ui.setShips([{
+                type: 'mole',
+                lasers: [
+                    { laserType: 'arbor-mh2', modules: [] },
+                    { laserType: 'un-maned', modules: [] },
+                    { laserType: 'arbor-mh2', modules: [] }
+                ]
+            }]);
+            ui.updateShipsUI();
+
+            // Change back to a regular laser
+            const laserSelect = document.getElementById('laser-0-1');
+            laserSelect.value = 'lancet-mh2';
+            ui.onLaserChange(0, 1);
+
+            // Verify laser is now Lancet MH2
+            const updatedShips = ui.getShips();
+            expect(updatedShips[0].lasers[1].laserType).toBe('lancet-mh2');
+            expect(updatedShips[0].lasers[1].modules).toHaveLength(
+                laserData['lancet-mh2'].moduleSlots
+            );
+        });
+    });
+
+    describe('getShipConfig - un-maned laser filtering', () => {
+        it('should exclude un-maned lasers from ship configuration', () => {
+            // Setup: MOLE with 2 maned lasers and 1 un-maned
+            ui.setShips([{
+                type: 'mole',
+                lasers: [
+                    { laserType: 'arbor-mh2', modules: [] },
+                    { laserType: 'lancet-mh2', modules: [] },
+                    { laserType: 'un-maned', modules: [] }
+                ]
+            }]);
+
+            const config = ui.getShipConfig();
+
+            // Should only return 2 lasers (exclude un-maned)
+            expect(config).toHaveLength(2);
+            expect(config[0].laser).toBe('arbor-mh2');
+            expect(config[1].laser).toBe('lancet-mh2');
+
+            // Verify no un-maned in config
+            expect(config.some(c => c.laser === 'un-maned')).toBe(false);
+        });
+
+        it('should include all maned lasers in configuration', () => {
+            // Setup: MOLE with all 3 lasers maned
+            ui.setShips([{
+                type: 'mole',
+                lasers: [
+                    { laserType: 'arbor-mh2', modules: ['none'] },
+                    { laserType: 'lancet-mh2', modules: [] },
+                    { laserType: 'hofstede-s2', modules: [] }
+                ]
+            }]);
+
+            const config = ui.getShipConfig();
+
+            // Should return all 3 lasers
+            expect(config).toHaveLength(3);
+            expect(config[0].laser).toBe('arbor-mh2');
+            expect(config[1].laser).toBe('lancet-mh2');
+            expect(config[2].laser).toBe('hofstede-s2');
+        });
+
+        it('should handle multiple ships with mixed maned/un-maned lasers', () => {
+            // Setup: 2 MOLEs, first with 2 maned + 1 un-maned, second with all 3 maned
+            ui.setShips([
+                {
+                    type: 'mole',
+                    lasers: [
+                        { laserType: 'arbor-mh2', modules: [] },
+                        { laserType: 'un-maned', modules: [] },
+                        { laserType: 'helix-ii', modules: [] }
+                    ]
+                },
+                {
+                    type: 'mole',
+                    lasers: [
+                        { laserType: 'lancet-mh2', modules: [] },
+                        { laserType: 'hofstede-s2', modules: [] },
+                        { laserType: 'klein-s2', modules: [] }
+                    ]
+                }
+            ]);
+
+            const config = ui.getShipConfig();
+
+            // Should return 5 lasers total (2 + 3)
+            expect(config).toHaveLength(5);
+
+            // Verify correct lasers from ship 0
+            expect(config[0].laser).toBe('arbor-mh2');
+            expect(config[1].laser).toBe('helix-ii');
+
+            // Verify correct lasers from ship 1
+            expect(config[2].laser).toBe('lancet-mh2');
+            expect(config[3].laser).toBe('hofstede-s2');
+            expect(config[4].laser).toBe('klein-s2');
+        });
+
+        it('should preserve module configuration in ship config', () => {
+            ui.setShips([{
+                type: 'prospector',
+                lasers: [
+                    { laserType: 'arbor', modules: ['rieger'] }
+                ]
+            }]);
+
+            const config = ui.getShipConfig();
+
+            expect(config).toHaveLength(1);
+            expect(config[0].laser).toBe('arbor');
+            expect(config[0].modules).toEqual(['rieger']);
         });
     });
 });

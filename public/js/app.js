@@ -9,6 +9,7 @@ await import('./calculations.js');
 await import('./ui.js');
 
 // Re-export from window.FracturationParty for tests
+export const shipData = window.FracturationParty.data.shipData;
 export const laserData = window.FracturationParty.data.laserData;
 export const moduleData = window.FracturationParty.data.moduleData;
 export const gadgetData = window.FracturationParty.data.gadgetData;

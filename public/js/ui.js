@@ -1,15 +1,79 @@
 // UI state and DOM manipulation
 
 // UI State
-let shipCount = 1;
-let shipModules = {}; // Store modules for each ship: { 0: ['none', 'none', 'none'], 1: [...] }
+let ships = []; // Array of ships: [{ type: 'prospector', lasers: [{ laserType: 'arbor', modules: ['none'] }] }]
 let gadgets = []; // Store gadgets placed on rock: ['sabir', 'optimax', ...]
+
+// Legacy compatibility
+let shipCount = 0;
+let shipModules = {};
+
+/**
+ * Initialize a new ship with default lasers
+ * @param {string} shipType - 'prospector' or 'mole'
+ * @returns {Object} New ship object
+ */
+function createShip(shipType) {
+    const { shipData, laserData } = window.FracturationParty.data;
+    const shipSpec = shipData[shipType];
+    const defaultLaser = shipType === 'prospector' ? 'arbor' : 'arbor-mh2';
+    const laser = laserData[defaultLaser];
+
+    const lasers = [];
+    for (let i = 0; i < shipSpec.laserCount; i++) {
+        lasers.push({
+            laserType: defaultLaser,
+            modules: Array(laser.moduleSlots).fill('none')
+        });
+    }
+
+    return {
+        type: shipType,
+        lasers: lasers
+    };
+}
+
+/**
+ * Get lasers compatible with specified ship type
+ * @param {string} shipType - 'prospector' or 'mole'
+ * @returns {Object} Compatible lasers
+ */
+function getCompatibleLasers(shipType) {
+    const { shipData, laserData } = window.FracturationParty.data;
+    const ship = shipData[shipType];
+    const compatibleLasers = {};
+
+    for (const laserKey in laserData) {
+        const laser = laserData[laserKey];
+        if (laser.size === ship.laserSize) {
+            compatibleLasers[laserKey] = laser;
+        }
+    }
+
+    return compatibleLasers;
+}
+
+/**
+ * Sync legacy shipCount and shipModules with new ships array
+ */
+function syncLegacyState() {
+    shipCount = ships.length;
+    shipModules = {};
+    ships.forEach((ship, shipIdx) => {
+        // For legacy: flatten all laser modules into shipModules[shipIdx]
+        if (ship.lasers.length > 0) {
+            shipModules[shipIdx] = ship.lasers[0].modules;
+        }
+    });
+}
 
 /**
  * Add a new ship to the configuration
  */
 function addShip() {
-    shipCount++;
+    // Always add a Prospector by default (user can change it after)
+    ships.push(createShip('prospector'));
+    syncLegacyState();
     updateShipsUI();
     updateTable();
 }
@@ -19,72 +83,83 @@ function addShip() {
  * @param {number} index - Ship index to remove
  */
 function removeShip(index) {
-    if (shipCount > 1) {
-        const currentConfig = [];
-        for (let i = 0; i < shipCount; i++) {
-            const laserSelect = document.getElementById(`laser-${i}`);
-            if (laserSelect) {
-                currentConfig.push(laserSelect.value);
-            }
-        }
-        currentConfig.splice(index, 1);
-
-        delete shipModules[index];
-        const newModules = {};
-        Object.keys(shipModules).forEach(key => {
-            const shipIndex = parseInt(key);
-            if (shipIndex > index) {
-                newModules[shipIndex - 1] = shipModules[shipIndex];
-            } else if (shipIndex < index) {
-                newModules[shipIndex] = shipModules[shipIndex];
-            }
-        });
-        shipModules = newModules;
-
-        shipCount--;
-        updateShipsUI(currentConfig);
+    if (ships.length > 1) {
+        ships.splice(index, 1);
+        syncLegacyState();
+        updateShipsUI();
         updateTable();
     }
 }
 
 /**
+ * Handle ship type change event
+ * @param {number} shipIndex - Index of the ship that changed
+ */
+function onShipTypeChange(shipIndex) {
+    const shipTypeSelect = document.getElementById(`ship-type-${shipIndex}`);
+    const newType = shipTypeSelect.value;
+
+    // Replace the ship with a new one of the selected type
+    ships[shipIndex] = createShip(newType);
+    syncLegacyState();
+    updateShipsUI();
+    updateTable();
+}
+
+/**
+ * Generate laser stats HTML
+ * @param {Object} laser - Laser data
+ * @param {string} laserKey - Laser key
+ * @param {number} referencePower - Reference fracturing power for comparison
+ * @param {string} shipType - Ship type for reference laser determination
+ * @returns {string} HTML for laser stats
+ */
+function generateLaserStatsHTML(laser, laserKey, referencePower, shipType) {
+    const referenceLaser = shipType === 'prospector' ? 'arbor' : 'arbor-mh2';
+    const statsParts = [];
+
+    // 1. Fracturing Power FIRST (most important for fracturation)
+    if (laserKey !== referenceLaser) {
+        const variation = ((laser.fracturingPower - referencePower) / referencePower) * 100;
+        const pwrColor = variation > 0 ? 'green' : 'red';
+        statsParts.push(`Fract. Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
+    }
+
+    // 2. Resistance SECOND (directly affects fracturation calculations)
+    if (laser.resistance !== 1.0) {
+        const resVar = (laser.resistance - 1.0) * 100;
+        const resColor = resVar < 0 ? 'green' : 'red';
+        statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
+    }
+
+    // 3. Instability/optimal window THIRD (quality of life)
+    if (laser.instability !== 1.0) {
+        const instVar = (laser.instability - 1.0) * 100;
+        const instColor = instVar > 0 ? 'green' : 'red';
+        statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+    }
+
+    return statsParts.join(', ');
+}
+
+/**
  * Update the ships configuration UI
- * @param {Array|null} preservedConfig - Optional preserved laser configuration
+ * @param {Array|null} preservedConfig - Optional preserved laser configuration (unused in new architecture)
  * @param {string|null} focusedElementId - Optional ID of the element to re-focus after update
  */
 function updateShipsUI(preservedConfig = null, focusedElementId = null) {
-    const { laserData, moduleData } = window.FracturationParty.data;
+    const { shipData, laserData, moduleData } = window.FracturationParty.data;
     const container = document.getElementById('ships-container');
 
-    // --- Pre-generate dynamic dropdown options ---
-    let laserOptionsHTML = '';
-    const arborFracturingPower = laserData['arbor'].fracturingPower;
-    for (const laserKey in laserData) {
-        const laser = laserData[laserKey];
-        const descriptionParts = [];
+    if (!container) return;
 
-        // 1. Fracturing Power FIRST (most important)
-        if (laserKey !== 'arbor') {
-            const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-            descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
-        }
-
-        // 2. Resistance SECOND (directly affects fracturation)
-        if (laser.resistance !== 1.0) {
-            const resVar = (laser.resistance - 1.0) * 100;
-            descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
-        }
-
-        // 3. Instability/optimal window THIRD (quality of life)
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
-        }
-
-        let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
-        laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
+    // Initialize ships if empty
+    if (ships.length === 0) {
+        ships.push(createShip('prospector'));
+        syncLegacyState();
     }
 
+    // --- Pre-generate module options HTML ---
     const modulesByManufacturer = {};
     for (const key in moduleData) {
         if (key === 'none') continue;
@@ -134,102 +209,169 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
         moduleOptionsHTML += `</optgroup>`;
     }
 
-    // --- Save current config and rebuild UI ---
-    const currentConfig = preservedConfig || [];
-    if (!preservedConfig) {
-        for (let i = 0; i < shipCount; i++) {
-            const laserSelect = document.getElementById(`laser-${i}`);
-            currentConfig.push(laserSelect ? laserSelect.value : 'arbor');
-            if (!shipModules[i]) {
-                const laserKey = currentConfig[i] || 'arbor';
-                shipModules[i] = Array(laserData[laserKey].moduleSlots).fill('none');
-            }
-        }
-    }
-
+    // --- Rebuild UI ---
     container.innerHTML = '';
 
-    for (let i = 0; i < shipCount; i++) {
+    ships.forEach((ship, shipIndex) => {
         const shipDiv = document.createElement('div');
         shipDiv.className = 'ship-item';
 
-        const laserKey = currentConfig[i] || 'arbor';
-        const laser = laserData[laserKey];
-        const moduleSlots = laser.moduleSlots;
+        const shipSpec = shipData[ship.type];
+        const shipName = shipSpec.name;
 
-        const statsParts = [];
+        // Get lasers compatible with this ship's type
+        const compatibleLasers = getCompatibleLasers(ship.type);
 
-        // 1. Fracturing Power FIRST (most important for fracturation)
-        if (laserKey !== 'arbor') {
-            const variation = ((laser.fracturingPower - arborFracturingPower) / arborFracturingPower) * 100;
-            const pwrColor = variation > 0 ? 'green' : 'red';
-            statsParts.push(`Fract. Pwr: <span style="color:${pwrColor};">${variation > 0 ? '+' : ''}${variation.toFixed(0)}%</span>`);
+        // Get reference laser and power for this ship type
+        const referenceLaser = ship.type === 'prospector' ? 'arbor' : 'arbor-mh2';
+        const referencePower = laserData[referenceLaser].fracturingPower;
+
+        // --- Pre-generate laser options HTML for this ship type ---
+        let laserOptionsHTML = '';
+        for (const laserKey in compatibleLasers) {
+            const laser = compatibleLasers[laserKey];
+            const descriptionParts = [];
+
+            if (laserKey !== referenceLaser) {
+                const variation = ((laser.fracturingPower - referencePower) / referencePower) * 100;
+                descriptionParts.push(`Fract. Pwr: ${variation > 0 ? '+' : ''}${variation.toFixed(0)}%`);
+            }
+
+            if (laser.resistance !== 1.0) {
+                const resVar = (laser.resistance - 1.0) * 100;
+                descriptionParts.push(`Res: ${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%`);
+            }
+
+            if (laser.instability !== 1.0) {
+                const instVar = (laser.instability - 1.0) * 100;
+                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+            }
+
+            let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
+            laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
         }
 
-        // 2. Resistance SECOND (directly affects fracturation calculations)
-        if (laser.resistance !== 1.0) {
-            const resVar = (laser.resistance - 1.0) * 100;
-            const resColor = resVar < 0 ? 'green' : 'red';
-            statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
-        }
+        // Build lasers HTML
+        let lasersHTML = '';
+        ship.lasers.forEach((laserConfig, laserIndex) => {
+            const laserKey = laserConfig.laserType;
 
-        // 3. Instability/optimal window THIRD (quality of life)
-        if (laser.instability !== 1.0) {
-            const instVar = (laser.instability - 1.0) * 100;
-            const instColor = instVar > 0 ? 'green' : 'red';
-            statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
-        }
+            // Add "un-maned" option for secondary lasers (laserIndex > 0)
+            const laserSelectOptions = laserIndex > 0
+                ? `<option value="un-maned">(Un-maned)</option>${laserOptionsHTML}`
+                : laserOptionsHTML;
 
-        const statsHTML = statsParts.join(', ');
+            // Handle un-maned lasers (no description or modules)
+            if (laserKey === 'un-maned') {
+                lasersHTML += `
+                    <div class="laser-config" id="laser-config-${shipIndex}-${laserIndex}">
+                        ${ship.lasers.length > 1 ? `<h4>Laser ${laserIndex + 1}</h4>` : ''}
 
-        let modulesHTML = '';
-        for (let slot = 0; slot < moduleSlots; slot++) {
-            const moduleKey = shipModules[i]?.[slot] || 'none';
-            const module = moduleData[moduleKey];
-            const moduleDescriptionHTML = generateModuleDescriptionHTML(module);
+                        <div class="laser-select-container">
+                            <label>Mining Head</label>
+                            <select id="laser-${shipIndex}-${laserIndex}" onchange="FracturationParty.ui.onLaserChange(${shipIndex}, ${laserIndex})">
+                                ${laserSelectOptions}
+                            </select>
+                        </div>
 
-            modulesHTML += `
-                <div class="module-slot">
-                    <label>Module ${slot + 1}</label>
-                    <select id="module-${i}-${slot}" class="module-select" onchange="FracturationParty.ui.onModuleChange(${i}, ${slot})">
-                        ${moduleOptionsHTML}
-                    </select>
-                    <div class="module-description">${moduleDescriptionHTML}</div>
+                        <div class="laser-description">
+                            <div class="laser-text" style="font-style: italic; color: var(--text-secondary);">This laser position is not manned.</div>
+                        </div>
+                    </div>
+                `;
+                return; // Skip to next laser
+            }
+
+            const laser = laserData[laserKey];
+            const moduleSlots = laser.moduleSlots;
+
+            // Generate laser stats
+            const statsHTML = generateLaserStatsHTML(laser, laserKey, referencePower, ship.type);
+
+            // Build modules HTML for this laser
+            let modulesHTML = '';
+            for (let slot = 0; slot < moduleSlots; slot++) {
+                const moduleKey = laserConfig.modules[slot] || 'none';
+                const module = moduleData[moduleKey];
+                const moduleDescriptionHTML = generateModuleDescriptionHTML(module);
+
+                modulesHTML += `
+                    <div class="module-slot">
+                        <label>Module ${slot + 1}</label>
+                        <select id="module-${shipIndex}-${laserIndex}-${slot}" class="module-select" onchange="FracturationParty.ui.onModuleChange(${shipIndex}, ${laserIndex}, ${slot})">
+                            ${moduleOptionsHTML}
+                        </select>
+                        <div class="module-description">${moduleDescriptionHTML}</div>
+                    </div>
+                `;
+            }
+
+            // Laser configuration block
+            lasersHTML += `
+                <div class="laser-config" id="laser-config-${shipIndex}-${laserIndex}">
+                    ${ship.lasers.length > 1 ? `<h4>Laser ${laserIndex + 1}</h4>` : ''}
+
+                    <div class="laser-select-container">
+                        <label>Mining Head</label>
+                        <select id="laser-${shipIndex}-${laserIndex}" onchange="FracturationParty.ui.onLaserChange(${shipIndex}, ${laserIndex})">
+                            ${laserSelectOptions}
+                        </select>
+                    </div>
+
+                    <div class="laser-description">
+                        <div class="laser-stats">${statsHTML}</div>
+                        <div class="laser-text">${laser.description}</div>
+                    </div>
+
+                    <div class="modules-container">
+                        ${modulesHTML}
+                    </div>
                 </div>
             `;
-        }
+        });
 
         shipDiv.innerHTML = `
             <div class="ship-header">
-                <label>Prospector #${i + 1}</label>
-                ${shipCount > 1 ? `<button class="remove-ship-btn" onclick="FracturationParty.ui.removeShip(${i})" title="Remove ship">🗑️</button>` : ''}
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="min-width: 80px; white-space: nowrap;">Ship #${shipIndex + 1}</label>
+                    <select id="ship-type-${shipIndex}" onchange="FracturationParty.ui.onShipTypeChange(${shipIndex})">
+                        <option value="prospector">Prospector (1 laser S1, 32 SCU)</option>
+                        <option value="mole">MOLE (3 lasers S2, 96 SCU)</option>
+                    </select>
+                </div>
+                ${ships.length > 1 ? `<button class="remove-ship-btn" onclick="FracturationParty.ui.removeShip(${shipIndex})" title="Remove ship">🗑️</button>` : ''}
             </div>
-            <div class="laser-select-container">
-                <label>Mining Head</label>
-                <select id="laser-${i}" onchange="FracturationParty.ui.onLaserChange(${i})">
-                    ${laserOptionsHTML}
-                </select>
-            </div>
-            <div class="laser-description">
-                <div class="laser-stats">${statsHTML}</div>
-                <div class="laser-text">${laser.description}</div>
-            </div>
-            <div class="modules-container">
-                ${modulesHTML}
-            </div>
+            ${lasersHTML}
         `;
         container.appendChild(shipDiv);
 
-        document.getElementById(`laser-${i}`).value = laserKey;
-        if (shipModules[i]) {
+        // Set the ship type selector value
+        const shipTypeSelect = document.getElementById(`ship-type-${shipIndex}`);
+        if (shipTypeSelect) {
+            shipTypeSelect.value = ship.type;
+        }
+
+        // Set the selected values for lasers and modules
+        ship.lasers.forEach((laserConfig, laserIndex) => {
+            const laserSelect = document.getElementById(`laser-${shipIndex}-${laserIndex}`);
+            if (laserSelect) {
+                laserSelect.value = laserConfig.laserType;
+            }
+
+            // Skip module setting for un-maned lasers
+            if (laserConfig.laserType === 'un-maned') {
+                return;
+            }
+
+            const moduleSlots = laserData[laserConfig.laserType].moduleSlots;
             for (let slot = 0; slot < moduleSlots; slot++) {
-                const moduleSelect = document.getElementById(`module-${i}-${slot}`);
-                if (moduleSelect && shipModules[i][slot]) {
-                    moduleSelect.value = shipModules[i][slot];
+                const moduleSelect = document.getElementById(`module-${shipIndex}-${laserIndex}-${slot}`);
+                if (moduleSelect && laserConfig.modules[slot]) {
+                    moduleSelect.value = laserConfig.modules[slot];
                 }
             }
-        }
-    }
+        });
+    });
 
     // Restore focus if an element ID was provided
     if (focusedElementId) {
@@ -243,17 +385,34 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
 /**
  * Handle laser change event - resets modules when laser changes
  * @param {number} shipIndex - Index of the ship that changed
+ * @param {number} laserIndex - Index of the laser that changed
  * @param {string|null} focusedId - ID of the element to re-focus
  */
-function onLaserChange(shipIndex, focusedId = null) {
-    const laserData = window.FracturationParty.data.laserData;
-    const laserSelect = document.getElementById(`laser-${shipIndex}`);
-    focusedId = focusedId || laserSelect.id; // Use current element's ID if not provided
+function onLaserChange(shipIndex, laserIndex, focusedId = null) {
+    const { laserData } = window.FracturationParty.data;
+    const laserSelect = document.getElementById(`laser-${shipIndex}-${laserIndex}`);
+    focusedId = focusedId || laserSelect?.id; // Use current element's ID if not provided
 
-    const laser = laserSelect.value;
-    const moduleSlots = laserData[laser].moduleSlots;
-    shipModules[shipIndex] = Array(moduleSlots).fill('none');
+    const newLaserType = laserSelect.value;
 
+    // Handle un-maned laser (no crew operating this laser)
+    if (newLaserType === 'un-maned') {
+        ships[shipIndex].lasers[laserIndex] = {
+            laserType: 'un-maned',
+            modules: []
+        };
+    } else {
+        const laser = laserData[newLaserType];
+        const moduleSlots = laser.moduleSlots;
+
+        // Update the ships array
+        ships[shipIndex].lasers[laserIndex] = {
+            laserType: newLaserType,
+            modules: Array(moduleSlots).fill('none')
+        };
+    }
+
+    syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
 }
@@ -261,27 +420,27 @@ function onLaserChange(shipIndex, focusedId = null) {
 /**
  * Handle module change event
  * @param {number} shipIndex - Index of the ship that changed
+ * @param {number} laserIndex - Index of the laser that changed
  * @param {number} slotIndex - Index of the module slot that changed
  * @param {string|null} focusedId - ID of the element to re-focus
  */
-function onModuleChange(shipIndex, slotIndex, focusedId = null) {
-    const laserKey = document.getElementById(`laser-${shipIndex}`)?.value || 'arbor';
-    const maxModuleSlots = window.FracturationParty.data.laserData[laserKey].moduleSlots;
+function onModuleChange(shipIndex, laserIndex, slotIndex, focusedId = null) {
+    const moduleSelect = document.getElementById(`module-${shipIndex}-${laserIndex}-${slotIndex}`);
+    focusedId = focusedId || moduleSelect?.id; // Use current element's ID if not provided
 
-    if (slotIndex >= maxModuleSlots) {
-        throw new Error(`Attempted to assign module to slot ${slotIndex} for ship ${shipIndex}, but laser "${laserKey}" only supports ${maxModuleSlots} module slots.`);
+    const newModuleValue = moduleSelect.value;
+
+    // Validate slotIndex
+    if (slotIndex >= ships[shipIndex].lasers[laserIndex].modules.length) {
+        const laserType = ships[shipIndex].lasers[laserIndex].laserType;
+        const maxModuleSlots = window.FracturationParty.data.laserData[laserType].moduleSlots;
+        throw new Error(`Attempted to assign module to slot ${slotIndex} for ship ${shipIndex} laser ${laserIndex}, but laser "${laserType}" only supports ${maxModuleSlots} module slots.`);
     }
 
-    const moduleSelect = document.getElementById(`module-${shipIndex}-${slotIndex}`);
-    focusedId = focusedId || moduleSelect.id; // Use current element's ID if not provided
+    // Update the ships array
+    ships[shipIndex].lasers[laserIndex].modules[slotIndex] = newModuleValue;
 
-    if (moduleSelect) {
-        if (!shipModules[shipIndex]) {
-            // This block should ideally not be reached if UI is correctly built
-            shipModules[shipIndex] = Array(maxModuleSlots).fill('none');
-        }
-        shipModules[shipIndex][slotIndex] = moduleSelect.value;
-    }
+    syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
 }
@@ -457,16 +616,23 @@ function generateModuleDescriptionHTML(module) {
 
 /**
  * Get current ship configuration from the UI
- * @returns {Array} Array of ship configurations {laser, modules}
+ * Flattens all lasers from all ships into a single array for calculations
+ * Skips un-maned lasers
+ * @returns {Array} Array of laser configurations {laser, modules}
  */
 function getShipConfig() {
     const config = [];
-    for (let i = 0; i < shipCount; i++) {
-        const laserSelect = document.getElementById(`laser-${i}`);
-        const laser = laserSelect.value;
-        const modules = shipModules[i] || [];
-        config.push({ laser, modules });
-    }
+    ships.forEach(ship => {
+        ship.lasers.forEach(laser => {
+            // Skip un-maned lasers (not operated by crew)
+            if (laser.laserType !== 'un-maned') {
+                config.push({
+                    laser: laser.laserType,
+                    modules: laser.modules
+                });
+            }
+        });
+    });
     return config;
 }
 
@@ -533,7 +699,11 @@ function updateTable() {
  */
 function initializeUI() {
     if (document.getElementById('ships-container')) {
-        shipModules[0] = ['none', 'none', 'none'];
+        // Initialize with one prospector if ships is empty
+        if (ships.length === 0) {
+            ships.push(createShip('prospector'));
+            syncLegacyState();
+        }
         updateShipsUI();
         updateGadgetsUI();
         updateTable();
@@ -545,6 +715,7 @@ window.FracturationParty = window.FracturationParty || {};
 window.FracturationParty.ui = {
     addShip,
     removeShip,
+    onShipTypeChange,
     onLaserChange,
     onModuleChange,
     addGadget,
@@ -558,5 +729,11 @@ window.FracturationParty.ui = {
     getShipModules: () => shipModules,
     setShipModules: (newModules) => { shipModules = newModules; },
     getShipCount: () => shipCount,
-    setShipCount: (newCount) => { shipCount = newCount; }
+    setShipCount: (newCount) => { shipCount = newCount; },
+    getShips: () => ships,
+    setShips: (newShips) => { ships = newShips; syncLegacyState(); },
+    // MOLE feature test helpers
+    createShip,
+    getCompatibleLasers,
+    getShipConfig
 };
