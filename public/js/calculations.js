@@ -80,10 +80,10 @@ function calculateMaxMass(resistance, ships, gadgets = []) {
     const combinedPower = calculateCombinedPower(ships);
     const modifiers = calculateCombinedModifiers(ships);
 
-    // New realistic formula based on Star Citizen 4.x community data
-    // Baseline: 1 Arbor (1890 fracturing power) can fracture ~8000kg at 0% resistance
+    // Formula calibrated against in-game measurements (Prospector rental + Arbor MH1)
+    // Baseline: 1 Arbor (1890 fracturing power) can fracture ~10000kg at 0% resistance
     const baselinePower = 1890;
-    const baselineMass = 8000;
+    const baselineMass = 10000;
 
     // First apply gadget modifiers to rock resistance
     const rockResistanceAfterGadgets = calculateRockResistance(resistance, gadgets);
@@ -94,17 +94,17 @@ function calculateMaxMass(resistance, ships, gadgets = []) {
     // Power scaling: more lasers = proportionally more capacity
     const powerMultiplier = combinedPower / baselinePower;
 
-    // Resistance impact: exponential curve (resistance has strong impact at high values)
-    // At 0% resistance: factor = 1.0
-    // At 50% resistance: factor ≈ 0.25
-    // At 80% resistance: factor ≈ 0.04
-    const resistanceFactor = Math.pow(1 - effectiveResistance, 2.5);
+    // Resistance impact: LINEAR relationship (validated against in-game data)
+    // At 0% resistance: factor = 1.0 (10000 kg)
+    // At 50% resistance: factor = 0.5 (5000 kg)
+    // At 100% resistance: factor = 0.0 (0 kg)
+    const resistanceFactor = 1 - effectiveResistance;
 
     // Calculate max mass
     let maxMass = baselineMass * powerMultiplier * resistanceFactor;
 
     // Realistic cap: even with multiple ships, there's a practical limit
-    maxMass = Math.min(maxMass, 50000);
+    maxMass = Math.min(maxMass, 100000);
 
     // Minimum threshold
     maxMass = Math.max(maxMass, 100);
