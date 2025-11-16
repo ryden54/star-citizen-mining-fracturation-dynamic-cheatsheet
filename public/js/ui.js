@@ -731,5 +731,9 @@ window.FracturationParty.ui = {
     getShipCount: () => shipCount,
     setShipCount: (newCount) => { shipCount = newCount; },
     getShips: () => ships,
-    setShips: (newShips) => { ships = newShips; syncLegacyState(); }
+    setShips: (newShips) => { ships = newShips; syncLegacyState(); },
+    // MOLE feature test helpers
+    createShip,
+    getCompatibleLasers,
+    getShipConfig
 };
