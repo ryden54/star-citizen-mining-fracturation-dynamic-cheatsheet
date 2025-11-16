@@ -1,0 +1,130 @@
+{
+  "metadata": {
+    "description": "Donn\u00e9es de r\u00e9f\u00e9rence extraites de captures d'\u00e9cran in-game (Star Citizen Live)",
+    "ship": "Prospector (location)",
+    "laser": "Arbor MH1 (laser par d\u00e9faut)",
+    "modules": "Aucun module install\u00e9",
+    "gadgets": "Aucun gadget actif",
+    "location": "Surface de lunes (pas d'ast\u00e9ro\u00efdes)",
+    "date": "2025-11-16",
+    "purpose": "Valider la fid\u00e9lit\u00e9 de la logique de calcul de fracturation",
+    "notes": "La possibilit\u00e9 de fracturer d\u00e9pend de la masse et de la r\u00e9sistance de la roche. L'instabilit\u00e9 n'est pas prise en compte."
+  },
+  "laser_specs": {
+    "name": "Arbor MH1",
+    "power": 2.4,
+    "type": "helix",
+    "throttle_speed": 1.0,
+    "resistance_modifier": 1.0,
+    "instability_modifier": 1.0,
+    "optimal_window_modifier": 1.0,
+    "optimal_charge_window_size": 0.2,
+    "shatter_damage_modifier": 1.0
+  },
+  "test_cases": [
+    {
+      "id": 1,
+      "masse_kg": 8414,
+      "resistance_pct": 40,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd pour le laser Arbor"
+    },
+    {
+      "id": 2,
+      "masse_kg": 4814,
+      "resistance_pct": 44,
+      "fracturable": true,
+      "difficulty": "hard",
+      "notes": "Même masse que #4, mais résistance plus faible - difficulté élevée"
+    },
+    {
+      "id": 3,
+      "masse_kg": 5294,
+      "resistance_pct": 10,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Faible résistance, fracturation facile"
+    },
+    {
+      "id": 4,
+      "masse_kg": 4814,
+      "resistance_pct": 55,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Même masse que #2, mais 11% résistance en plus = impossible"
+    },
+    {
+      "id": 5,
+      "masse_kg": 7759,
+      "resistance_pct": 39,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd"
+    },
+    {
+      "id": 6,
+      "masse_kg": 3540,
+      "resistance_pct": 28,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Fracturation facile, devrait avoir une bonne marge de sécurité"
+    },
+    {
+      "id": 7,
+      "masse_kg": 7097,
+      "resistance_pct": 36,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd"
+    },
+    {
+      "id": 8,
+      "masse_kg": 1456,
+      "resistance_pct": 39,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Petite roche, fracturation facile"
+    },
+    {
+      "id": 9,
+      "masse_kg": 5314,
+      "resistance_pct": 54,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Résistance trop élevée"
+    },
+    {
+      "id": 10,
+      "masse_kg": 5678,
+      "resistance_pct": 62,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Résistance très élevée"
+    },
+    {
+      "id": 11,
+      "masse_kg": 1138,
+      "resistance_pct": 38,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Petite roche, fracturation facile"
+    },
+    {
+      "id": 12,
+      "masse_kg": 6418,
+      "resistance_pct": 31,
+      "fracturable": true,
+      "difficulty": "challenging",
+      "notes": "Grosse roche, difficulté moyenne-haute mais possible"
+    },
+    {
+      "id": 13,
+      "masse_kg": 3366,
+      "resistance_pct": 20,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Faible résistance, fracturation facile"
+    }
+  ]
+}
