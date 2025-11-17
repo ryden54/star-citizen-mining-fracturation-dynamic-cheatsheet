@@ -102,6 +102,7 @@ function addShip() {
     syncLegacyState();
     updateShipsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -114,6 +115,7 @@ function removeShip(index) {
         syncLegacyState();
         updateShipsUI();
         updateTable();
+        updateURL();
     }
 }
 
@@ -130,6 +132,7 @@ function onShipTypeChange(shipIndex) {
     syncLegacyState();
     updateShipsUI();
     updateTable();
+    updateURL();
 
     // Restore focus to the ship type selector after UI update
     const updatedSelect = document.getElementById(`ship-type-${shipIndex}`);
@@ -490,6 +493,7 @@ function onLaserChange(shipIndex, laserIndex, focusedId = null) {
     syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
+    updateURL();
 }
 
 /**
@@ -518,6 +522,7 @@ function onModuleChange(shipIndex, laserIndex, slotIndex, focusedId = null) {
     syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
+    updateURL();
 }
 
 /**
@@ -527,6 +532,7 @@ function addGadget() {
     gadgets.push('sabir'); // Default gadget
     updateGadgetsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -537,6 +543,7 @@ function removeGadget(index) {
     gadgets.splice(index, 1);
     updateGadgetsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -552,6 +559,7 @@ function onGadgetChange(index, focusedId = null) {
         gadgets[index] = gadgetSelect.value;
         updateGadgetsUI(focusedId);
         updateTable();
+        updateURL();
     }
 }
 
@@ -790,18 +798,56 @@ function updateChart() {
 }
 
 /**
+ * Update URL hash with current configuration
+ */
+function updateURL() {
+    if (window.FracturationParty.urlState) {
+        window.FracturationParty.urlState.updateURLHash(ships, gadgets);
+    }
+}
+
+/**
+ * Load configuration from URL hash if available
+ * @returns {boolean} True if config was loaded from URL, false otherwise
+ */
+function loadFromURL() {
+    if (!window.FracturationParty.urlState) {
+        return false;
+    }
+
+    const config = window.FracturationParty.urlState.loadFromURLHash();
+    if (config && config.ships && config.gadgets) {
+        ships = config.ships;
+        gadgets = config.gadgets;
+        syncLegacyState();
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Initialize the UI
  */
 function initializeUI() {
     if (document.getElementById('ships-container')) {
-        // Initialize with one prospector if ships is empty
-        if (ships.length === 0) {
+        // Try to load configuration from URL first
+        const loadedFromURL = loadFromURL();
+
+        // Initialize with one prospector if ships is empty and nothing loaded from URL
+        if (ships.length === 0 && !loadedFromURL) {
             ships.push(createShip('prospector'));
             syncLegacyState();
         }
+
         updateShipsUI();
         updateGadgetsUI();
         updateTable();
+
+        // Update URL with initial state (if not loaded from URL)
+        if (!loadedFromURL) {
+            updateURL();
+        }
 
         // Add resize listener to redraw chart when window size changes
         let resizeTimeout;
