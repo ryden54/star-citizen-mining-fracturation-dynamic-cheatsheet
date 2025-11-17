@@ -411,4 +411,133 @@ test.describe('Star Citizen Mining Calculator', () => {
         expect(tableHeaders[0]).toContain('Resistance');
         expect(tableHeaders[1]).toContain('Maximum Mass');
     });
+
+    test('should display capacity chart canvas', async ({ page }) => {
+        const canvas = page.locator('#capacity-chart');
+        await expect(canvas).toBeVisible();
+
+        // Verify canvas has an ID and is a canvas element
+        await expect(canvas).toHaveAttribute('id', 'capacity-chart');
+
+        // Verify canvas is not blank by checking if it has been drawn on
+        const hasContent = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            if (!canvas) return false;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return false;
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Check if any pixel is non-white/transparent (not blank canvas)
+            let pixelCount = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                // If any pixel is not white (255,255,255,255), canvas has content
+                if (data[i] !== 255 || data[i+1] !== 255 || data[i+2] !== 255 || data[i+3] !== 255) {
+                    pixelCount++;
+                }
+            }
+            // Canvas should have significant content (at least 1000 colored pixels)
+            return pixelCount > 1000;
+        });
+
+        expect(hasContent).toBe(true);
+    });
+
+    test('should update chart when laser selection changes', async ({ page }) => {
+        // Get initial canvas data URL
+        const initialData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        expect(initialData).toBeTruthy();
+
+        // Change laser type
+        const laserSelect = page.locator('#laser-0-0');
+        await laserSelect.selectOption('helix');
+
+        // Wait for chart update
+        await page.waitForTimeout(100);
+
+        // Get new canvas data
+        const updatedData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        // Chart should have changed
+        expect(updatedData).not.toBe(initialData);
+    });
+
+    test('should update chart when adding ships', async ({ page }) => {
+        // Get initial canvas data
+        const initialData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        // Add a ship
+        await page.click('button:has-text("Add a Ship")');
+        await page.waitForTimeout(100);
+
+        // Get updated canvas data
+        const updatedData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        // Chart should have changed (more capacity with 2 ships)
+        expect(updatedData).not.toBe(initialData);
+    });
+
+    test('should update chart when adding gadgets', async ({ page }) => {
+        // Get initial canvas data
+        const initialData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        // Add a gadget
+        await page.click('button:has-text("Add Gadget")');
+        await page.waitForTimeout(100);
+
+        // Select Sabir gadget (reduces resistance)
+        const gadgetSelect = page.locator('select[id^="gadget-"]').first();
+        await gadgetSelect.selectOption('sabir');
+        await page.waitForTimeout(100);
+
+        // Get updated canvas data
+        const updatedData = await page.evaluate(() => {
+            const canvas = document.getElementById('capacity-chart');
+            return canvas ? canvas.toDataURL() : null;
+        });
+
+        // Chart should have changed (more capacity with Sabir)
+        expect(updatedData).not.toBe(initialData);
+    });
+
+    test('should have chart methods accessible', async ({ page }) => {
+        const hasChartModule = await page.evaluate(() => {
+            return window.FracturationParty &&
+                   window.FracturationParty.chart &&
+                   typeof window.FracturationParty.chart.drawCapacityChart === 'function' &&
+                   typeof window.FracturationParty.chart.generateChartData === 'function';
+        });
+
+        expect(hasChartModule).toBe(true);
+    });
+
+    test('should generate valid chart data', async ({ page }) => {
+        const chartData = await page.evaluate(() => {
+            const ships = [{ laser: 'arbor', modules: [] }];
+            return window.FracturationParty.chart.generateChartData(ships);
+        });
+
+        expect(Array.isArray(chartData)).toBe(true);
+        expect(chartData.length).toBeGreaterThan(0);
+        expect(chartData[0]).toHaveProperty('resistance');
+        expect(chartData[0]).toHaveProperty('maxMass');
+    });
 });

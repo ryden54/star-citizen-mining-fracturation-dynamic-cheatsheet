@@ -6,6 +6,7 @@
 // They will execute and populate window.FracturationParty
 await import('./data.js');
 await import('./calculations.js');
+await import('./chart.js');
 await import('./ui.js');
 
 // Re-export from window.FracturationParty for tests
@@ -17,6 +18,11 @@ export const calculateCombinedPower = window.FracturationParty.calculations.calc
 export const calculateCombinedModifiers = window.FracturationParty.calculations.calculateCombinedModifiers;
 export const calculateRockResistance = window.FracturationParty.calculations.calculateRockResistance;
 export const calculateMaxMass = window.FracturationParty.calculations.calculateMaxMass;
+
+// Chart functions
+export const chart = window.FracturationParty.chart;
+export const drawCapacityChart = window.FracturationParty.chart.drawCapacityChart;
+export const generateChartData = window.FracturationParty.chart.generateChartData;
 
 // UI functions
 export const ui = window.FracturationParty.ui;

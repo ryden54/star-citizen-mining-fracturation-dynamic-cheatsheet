@@ -104,6 +104,12 @@ function onShipTypeChange(shipIndex) {
     syncLegacyState();
     updateShipsUI();
     updateTable();
+
+    // Restore focus to the ship type selector after UI update
+    const updatedSelect = document.getElementById(`ship-type-${shipIndex}`);
+    if (updatedSelect) {
+        updatedSelect.focus();
+    }
 }
 
 /**
@@ -692,6 +698,26 @@ function updateTable() {
 
     html += '</table>';
     document.getElementById('capacity-table').innerHTML = html;
+
+    // Update chart
+    updateChart();
+}
+
+/**
+ * Update the capacity chart
+ */
+function updateChart() {
+    const canvas = document.getElementById('capacity-chart');
+    if (!canvas || !window.FracturationParty.chart) {
+        return;
+    }
+
+    try {
+        const chartData = window.FracturationParty.chart.generateChartData(ships, gadgets);
+        window.FracturationParty.chart.drawCapacityChart(canvas, chartData);
+    } catch (error) {
+        console.error('Error updating chart:', error);
+    }
 }
 
 /**
@@ -707,6 +733,16 @@ function initializeUI() {
         updateShipsUI();
         updateGadgetsUI();
         updateTable();
+
+        // Add resize listener to redraw chart when window size changes
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            // Debounce resize events to avoid excessive redraws
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateChart();
+            }, 150);
+        });
     }
 }
 
@@ -723,6 +759,7 @@ window.FracturationParty.ui = {
     onGadgetChange,
     generateModuleDescriptionHTML,
     updateTable,
+    updateChart,
     initializeUI,
     updateShipsUI,
     // Test helpers
