@@ -342,6 +342,26 @@ describe('MOLE Ship Support', () => {
                 expect(laser.modules).toHaveLength(arborMH2Slots);
             });
         });
+
+        it('should create Golem with fixed Pitman laser', () => {
+            const ship = ui.createShip('golem');
+
+            expect(ship.type).toBe('golem');
+            expect(ship.lasers).toHaveLength(1);
+            expect(ship.lasers[0].laserType).toBe('pitman'); // Fixed laser
+            expect(ship.lasers[0].modules).toHaveLength(2); // Pitman has 2 module slots
+            expect(ship.lasers[0].modules).toEqual(['none', 'none']);
+        });
+
+        it('should handle ships with fixed lasers correctly', () => {
+            const golem = ui.createShip('golem');
+
+            // Verify the ship data has fixedLaser property
+            expect(shipData['golem'].fixedLaser).toBe('pitman');
+
+            // Verify the laser is set to the fixed laser
+            expect(golem.lasers[0].laserType).toBe(shipData['golem'].fixedLaser);
+        });
     });
 
     describe('getCompatibleLasers', () => {
@@ -358,9 +378,30 @@ describe('MOLE Ship Support', () => {
             expect(compatibleLasers['helix']).toBeDefined();
             expect(compatibleLasers['hofstede']).toBeDefined();
 
+            // Should NOT include Pitman (dedicated to Golem)
+            expect(compatibleLasers['pitman']).toBeUndefined();
+
             // Should NOT include S2 lasers
             expect(compatibleLasers['arbor-mh2']).toBeUndefined();
             expect(compatibleLasers['helix-ii']).toBeUndefined();
+        });
+
+        it('should return Size 1 lasers for Golem (including Pitman)', () => {
+            const compatibleLasers = ui.getCompatibleLasers('golem');
+
+            // All returned lasers must be size 1
+            Object.values(compatibleLasers).forEach(laser => {
+                expect(laser.size).toBe(1);
+            });
+
+            // Should include Pitman (fixed laser)
+            expect(compatibleLasers['pitman']).toBeDefined();
+            expect(compatibleLasers['pitman'].isFixed).toBe(true);
+            expect(compatibleLasers['pitman'].compatibleShips).toContain('golem');
+
+            // Should also include other S1 lasers
+            expect(compatibleLasers['arbor']).toBeDefined();
+            expect(compatibleLasers['helix']).toBeDefined();
         });
 
         it('should return only Size 2 lasers for MOLE', () => {

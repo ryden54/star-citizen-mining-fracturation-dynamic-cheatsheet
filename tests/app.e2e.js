@@ -100,8 +100,17 @@ test.describe('Star Citizen Mining Calculator', () => {
         // Get laserData from the page's context to make the test dynamic
         const laserData = await page.evaluate(() => window.FracturationParty.data.laserData);
 
-        // Filter to only size 1 lasers (compatible with Prospector)
-        const laserKeys = Object.keys(laserData).filter(key => laserData[key].size === 1);
+        // Filter to only size 1 lasers compatible with Prospector (excluding dedicated lasers like Pitman)
+        const laserKeys = Object.keys(laserData).filter(key => {
+            const laser = laserData[key];
+            // Size must be 1
+            if (laser.size !== 1) return false;
+            // If laser has compatibleShips, 'prospector' must be in the list OR list must be empty
+            if (laser.compatibleShips && laser.compatibleShips.length > 0) {
+                return laser.compatibleShips.includes('prospector');
+            }
+            return true; // No restriction, available for all S1 ships
+        });
 
         const laserSelect = page.locator('#laser-0-0');
         const options = laserSelect.locator('option');
@@ -539,5 +548,117 @@ test.describe('Star Citizen Mining Calculator', () => {
         expect(chartData.length).toBeGreaterThan(0);
         expect(chartData[0]).toHaveProperty('resistance');
         expect(chartData[0]).toHaveProperty('maxMass');
+    });
+
+    test('should display Golem in ship select options', async ({ page }) => {
+        // Click on the ship type select
+        const shipSelect = page.locator('#ship-type-0');
+        await expect(shipSelect).toBeVisible();
+
+        // Get all options
+        const options = await shipSelect.locator('option').allTextContents();
+
+        // Verify Golem is in the list
+        const hasGolem = options.some(option => option.includes('Golem'));
+        expect(hasGolem).toBe(true);
+
+        // Verify Golem mentions fixed laser
+        const golemOption = options.find(option => option.includes('Golem'));
+        expect(golemOption).toContain('1 fixed laser S1');
+        expect(golemOption).toContain('32 SCU');
+    });
+
+    test('should create Golem with fixed Pitman laser', async ({ page }) => {
+        // Change ship type to Golem
+        await page.selectOption('#ship-type-0', 'golem');
+
+        // Wait for UI update
+        await page.waitForTimeout(100);
+
+        // Verify the laser is displayed as fixed (not a select element)
+        const laserSelect = page.locator('#laser-0-0');
+        await expect(laserSelect).not.toBeVisible();
+
+        // Verify the fixed laser display exists
+        const fixedLaserDiv = page.locator('.laser-select-container div').filter({ hasText: 'Pitman Mining Laser' });
+        await expect(fixedLaserDiv).toBeVisible();
+        await expect(fixedLaserDiv).toContainText('Fixed equipment');
+    });
+
+    test('should display Pitman laser with module slots for Golem', async ({ page }) => {
+        // Change ship type to Golem
+        await page.selectOption('#ship-type-0', 'golem');
+
+        // Wait for UI update
+        await page.waitForTimeout(100);
+
+        // Verify Pitman has 2 module slots
+        const module1 = page.locator('#module-0-0-0');
+        const module2 = page.locator('#module-0-0-1');
+
+        await expect(module1).toBeVisible();
+        await expect(module2).toBeVisible();
+    });
+
+    test('should calculate correct capacity for Golem with Pitman', async ({ page }) => {
+        // Change ship type to Golem
+        await page.selectOption('#ship-type-0', 'golem');
+
+        // Wait for UI and calculations to update
+        await page.waitForTimeout(200);
+
+        // Verify table is displayed with values
+        const table = page.locator('#capacity-table table');
+        await expect(table).toBeVisible();
+
+        // Get a row value (resistance 0%) - use first() since all rows contain "0%"
+        const row = table.locator('tr').filter({ hasText: '0%' }).first();
+        await expect(row).toBeVisible();
+
+        // Should have a maximum mass value
+        const massCell = row.locator('td').last();
+        const massText = await massCell.textContent();
+        expect(massText).toMatch(/\d+.*kg/);
+    });
+
+    test('should maintain ship order: Golem, Prospector, MOLE', async ({ page }) => {
+        const shipSelect = page.locator('#ship-type-0');
+        const options = await shipSelect.locator('option').allTextContents();
+
+        // Verify order
+        const golemIndex = options.findIndex(opt => opt.includes('Golem'));
+        const prospectorIndex = options.findIndex(opt => opt.includes('Prospector'));
+        const moleIndex = options.findIndex(opt => opt.includes('MOLE'));
+
+        expect(golemIndex).toBeLessThan(prospectorIndex);
+        expect(prospectorIndex).toBeLessThan(moleIndex);
+    });
+
+    test('should not show Pitman laser for Prospector', async ({ page }) => {
+        // Ensure we're on Prospector (default)
+        const shipType = await page.locator('#ship-type-0').inputValue();
+
+        // If not prospector, switch to it
+        if (shipType !== 'prospector') {
+            await page.selectOption('#ship-type-0', 'prospector');
+            await page.waitForTimeout(100);
+        }
+
+        // For Prospector with configurable lasers, the laser select should exist
+        const laserSelect = page.locator('#laser-0-0');
+        await expect(laserSelect).toBeVisible();
+
+        // Get all laser options
+        const laserOptions = await laserSelect.locator('option').allTextContents();
+
+        // Verify Pitman is NOT in the list for Prospector
+        const hasPitman = laserOptions.some(option => option.includes('Pitman'));
+        expect(hasPitman).toBe(false);
+
+        // Verify other S1 lasers are available
+        const hasArbor = laserOptions.some(option => option.includes('Arbor MH1'));
+        const hasHelix = laserOptions.some(option => option.includes('Helix I'));
+        expect(hasArbor).toBe(true);
+        expect(hasHelix).toBe(true);
     });
 });
