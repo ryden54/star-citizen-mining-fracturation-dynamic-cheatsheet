@@ -35,6 +35,7 @@
                         <strong>⚠️ Important:</strong> These values are <strong>approximations</strong> based on Star Citizen 4.x community data and testing. Actual in-game results may vary depending on rock composition, distance, charge rate, and game updates. Use this as a general reference, not exact values. Always verify with the in-game prospecting interface during cooperative mining.
                     </div>
                     <div id="capacity-table"></div>
+                    <canvas id="capacity-chart" width="800" height="350"></canvas>
                 </div>
             </div>
         </div>
@@ -43,6 +44,7 @@
     <!-- Load scripts in dependency order (classic scripts work with file:// URLs) -->
     <script src="js/data.js"></script>
     <script src="js/calculations.js"></script>
+    <script src="js/chart.js"></script>
     <script src="js/ui.js"></script>
 
     <!-- Initialize UI after all scripts are loaded -->
