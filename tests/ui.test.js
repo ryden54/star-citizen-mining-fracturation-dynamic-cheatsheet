@@ -461,6 +461,34 @@ describe('MOLE Ship Support', () => {
             expect(updatedShips[0].lasers[0].laserType).toBe('arbor-mh2');
             expect(updatedShips[0].lasers[0].modules).toEqual(['none', 'none']); // Arbor MH2 has 2 module slots
         });
+
+        it('should restore focus to ship type selector after change', () => {
+            // Setup - spy on focus across all created elements
+            let focusCalled = false;
+            const originalGetElementById = document.getElementById.bind(document);
+
+            document.getElementById = vi.fn((id) => {
+                const element = originalGetElementById(id);
+                if (element && id === 'ship-type-0' && element.tagName === 'SELECT') {
+                    element.focus = () => { focusCalled = true; };
+                }
+                return element;
+            });
+
+            // Get initial select and change value
+            const shipTypeSelect = document.getElementById('ship-type-0');
+            expect(shipTypeSelect).not.toBeNull();
+            shipTypeSelect.value = 'mole';
+
+            // Trigger the change
+            ui.onShipTypeChange(0);
+
+            // Verify focus was called on the recreated element
+            expect(focusCalled).toBe(true);
+
+            // Restore original function
+            document.getElementById = originalGetElementById;
+        });
     });
 
     describe('onLaserChange with un-maned laser', () => {
@@ -608,6 +636,69 @@ describe('MOLE Ship Support', () => {
             expect(config).toHaveLength(1);
             expect(config[0].laser).toBe('arbor');
             expect(config[0].modules).toEqual(['rieger']);
+        });
+    });
+
+    describe('Resize listener', () => {
+        beforeEach(() => {
+            // Reset DOM
+            document.body.innerHTML = `
+                <div id="ships-container"></div>
+                <div id="capacity-table"></div>
+                <canvas id="capacity-chart" width="800" height="400"></canvas>
+            `;
+
+            // Mock chart module
+            window.FracturationParty = window.FracturationParty || {};
+            window.FracturationParty.chart = {
+                drawCapacityChart: vi.fn(),
+                generateChartData: vi.fn(() => [
+                    { resistance: 0, maxMass: 10000 },
+                    { resistance: 0.5, maxMass: 5000 }
+                ])
+            };
+
+            window.FracturationParty.data = { shipData, laserData, moduleData, gadgetData };
+        });
+
+        it('should add resize listener on initialization', () => {
+            const resizeSpy = vi.fn();
+            const originalAddEventListener = window.addEventListener;
+            window.addEventListener = vi.fn((event, handler) => {
+                if (event === 'resize') {
+                    resizeSpy(event, handler);
+                }
+                originalAddEventListener.call(window, event, handler);
+            });
+
+            ui.initializeUI();
+
+            expect(resizeSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+
+            window.addEventListener = originalAddEventListener;
+        });
+
+        it('should update chart on window resize', async () => {
+            vi.useFakeTimers();
+
+            ui.initializeUI();
+
+            const chartSpy = window.FracturationParty.chart.drawCapacityChart;
+            chartSpy.mockClear();
+
+            // Trigger resize event
+            window.dispatchEvent(new Event('resize'));
+
+            // Should not call immediately (debounced)
+            expect(chartSpy).not.toHaveBeenCalled();
+
+            // Fast-forward past debounce delay (150ms)
+            vi.advanceTimersByTime(200);
+
+            // Should have called chart update
+            expect(chartSpy).toHaveBeenCalled();
+
+            vi.useRealTimers();
         });
     });
 });

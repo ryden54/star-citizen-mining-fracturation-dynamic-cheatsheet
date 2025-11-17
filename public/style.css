@@ -67,13 +67,80 @@ h1 {
     gap: 20px;
 }
 
+/* Mobile: no height restrictions, natural flow */
+.form-column,
+.table-column {
+    overflow: visible;
+}
+
+/* Desktop: viewport-constrained with scroll */
 @media (min-width: 768px) {
     .main-layout {
         flex-direction: row;
         align-items: flex-start;
+        gap: 30px;
     }
-    .form-column { flex: 0 0 40%; }
-    .table-column { flex: 0 0 60%; }
+    .form-column {
+        flex: 0 0 40%;
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+    }
+    .table-column {
+        flex: 0 0 55%;
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Scrollbar styling for dark theme */
+    .form-column::-webkit-scrollbar,
+    .table-column::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .form-column::-webkit-scrollbar-track,
+    .table-column::-webkit-scrollbar-track {
+        background: var(--container-dark);
+        border-radius: 4px;
+    }
+
+    .form-column::-webkit-scrollbar-thumb,
+    .table-column::-webkit-scrollbar-thumb {
+        background: rgba(255, 140, 0, 0.4);
+        border-radius: 4px;
+    }
+
+    .form-column::-webkit-scrollbar-thumb:hover,
+    .table-column::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 140, 0, 0.6);
+    }
+}
+
+/* Chart responsive sizing */
+#capacity-chart {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin-top: 20px;
+    border: 1px solid rgba(255, 140, 0, 0.3);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: block;
+}
+
+@media (max-width: 767px) {
+    #capacity-chart {
+        /* Mobile: smaller but readable */
+        min-height: 300px;
+    }
+}
+
+@media (min-width: 768px) {
+    #capacity-chart {
+        /* Desktop: fixed height */
+        height: 350px;
+    }
 }
 
 .config-section {
