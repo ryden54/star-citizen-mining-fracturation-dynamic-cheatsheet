@@ -16,6 +16,21 @@ let shipModules = {};
 function createShip(shipType) {
     const { shipData, laserData } = window.FracturationParty.data;
     const shipSpec = shipData[shipType];
+
+    // Handle ships with fixed lasers (like Golem)
+    if (shipSpec.fixedLaser) {
+        const fixedLaserKey = shipSpec.fixedLaser;
+        const laser = laserData[fixedLaserKey];
+        return {
+            type: shipType,
+            lasers: [{
+                laserType: fixedLaserKey,
+                modules: Array(laser.moduleSlots).fill('none')
+            }]
+        };
+    }
+
+    // Handle ships with configurable lasers
     const defaultLaser = shipType === 'prospector' ? 'arbor' : 'arbor-mh2';
     const laser = laserData[defaultLaser];
 
@@ -35,7 +50,7 @@ function createShip(shipType) {
 
 /**
  * Get lasers compatible with specified ship type
- * @param {string} shipType - 'prospector' or 'mole'
+ * @param {string} shipType - 'prospector', 'mole', or 'golem'
  * @returns {Object} Compatible lasers
  */
 function getCompatibleLasers(shipType) {
@@ -45,9 +60,20 @@ function getCompatibleLasers(shipType) {
 
     for (const laserKey in laserData) {
         const laser = laserData[laserKey];
-        if (laser.size === ship.laserSize) {
-            compatibleLasers[laserKey] = laser;
+
+        // Check size compatibility
+        if (laser.size !== ship.laserSize) {
+            continue;
         }
+
+        // If laser has compatibleShips property, check if current ship is in the list
+        if (laser.compatibleShips && laser.compatibleShips.length > 0) {
+            if (!laser.compatibleShips.includes(shipType)) {
+                continue; // Skip this laser if ship is not in compatible list
+            }
+        }
+
+        compatibleLasers[laserKey] = laser;
     }
 
     return compatibleLasers;
@@ -257,6 +283,9 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
             laserOptionsHTML += `<option value="${laserKey}">${laser.name}${fullDescription}</option>`;
         }
 
+        // Check if this ship has a fixed laser
+        const hasFixedLaser = shipSpec.fixedLaser ? true : false;
+
         // Build lasers HTML
         let lasersHTML = '';
         ship.lasers.forEach((laserConfig, laserIndex) => {
@@ -313,36 +342,73 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
             }
 
             // Laser configuration block
-            lasersHTML += `
-                <div class="laser-config" id="laser-config-${shipIndex}-${laserIndex}">
-                    ${ship.lasers.length > 1 ? `<h4>Laser ${laserIndex + 1}</h4>` : ''}
+            if (hasFixedLaser) {
+                // Fixed laser: display as read-only with info
+                lasersHTML += `
+                    <div class="laser-config" id="laser-config-${shipIndex}-${laserIndex}">
+                        ${ship.lasers.length > 1 ? `<h4>Laser ${laserIndex + 1}</h4>` : ''}
 
-                    <div class="laser-select-container">
-                        <label>Mining Head</label>
-                        <select id="laser-${shipIndex}-${laserIndex}" onchange="FracturationParty.ui.onLaserChange(${shipIndex}, ${laserIndex})">
-                            ${laserSelectOptions}
-                        </select>
-                    </div>
+                        <div class="laser-select-container">
+                            <label>Mining Head</label>
+                            <div style="padding: 8px; background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px;">
+                                <strong>${laser.name}</strong> <span style="color: var(--text-secondary); font-style: italic;">(Fixed equipment)</span>
+                            </div>
+                        </div>
 
-                    <div class="laser-description">
-                        <div class="laser-stats">${statsHTML}</div>
-                        <div class="laser-text">${laser.description}</div>
-                    </div>
+                        <div class="laser-description">
+                            <div class="laser-stats">${statsHTML}</div>
+                            <div class="laser-text">${laser.description}</div>
+                        </div>
 
-                    <div class="modules-container">
-                        ${modulesHTML}
+                        <div class="modules-container">
+                            ${modulesHTML}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                // Configurable laser: display as dropdown
+                lasersHTML += `
+                    <div class="laser-config" id="laser-config-${shipIndex}-${laserIndex}">
+                        ${ship.lasers.length > 1 ? `<h4>Laser ${laserIndex + 1}</h4>` : ''}
+
+                        <div class="laser-select-container">
+                            <label>Mining Head</label>
+                            <select id="laser-${shipIndex}-${laserIndex}" onchange="FracturationParty.ui.onLaserChange(${shipIndex}, ${laserIndex})">
+                                ${laserSelectOptions}
+                            </select>
+                        </div>
+
+                        <div class="laser-description">
+                            <div class="laser-stats">${statsHTML}</div>
+                            <div class="laser-text">${laser.description}</div>
+                        </div>
+
+                        <div class="modules-container">
+                            ${modulesHTML}
+                        </div>
+                    </div>
+                `;
+            }
         });
+
+        // Generate ship type options dynamically, sorted by order
+        const sortedShips = Object.entries(shipData)
+            .sort(([, a], [, b]) => (a.order || 999) - (b.order || 999));
+
+        let shipTypeOptionsHTML = '';
+        for (const [shipKey, shipSpec] of sortedShips) {
+            const laserInfo = shipSpec.fixedLaser
+                ? `1 fixed laser S${shipSpec.laserSize}`
+                : `${shipSpec.laserCount} laser${shipSpec.laserCount > 1 ? 's' : ''} S${shipSpec.laserSize}`;
+            shipTypeOptionsHTML += `<option value="${shipKey}">${shipSpec.name} (${laserInfo}, ${shipSpec.capacity} SCU)</option>`;
+        }
 
         shipDiv.innerHTML = `
             <div class="ship-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <label style="min-width: 80px; white-space: nowrap;">Ship #${shipIndex + 1}</label>
                     <select id="ship-type-${shipIndex}" onchange="FracturationParty.ui.onShipTypeChange(${shipIndex})">
-                        <option value="prospector">Prospector (1 laser S1, 32 SCU)</option>
-                        <option value="mole">MOLE (3 lasers S2, 96 SCU)</option>
+                        ${shipTypeOptionsHTML}
                     </select>
                 </div>
                 ${ships.length > 1 ? `<button class="remove-ship-btn" onclick="FracturationParty.ui.removeShip(${shipIndex})" title="Remove ship">🗑️</button>` : ''}
@@ -359,9 +425,12 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
 
         // Set the selected values for lasers and modules
         ship.lasers.forEach((laserConfig, laserIndex) => {
-            const laserSelect = document.getElementById(`laser-${shipIndex}-${laserIndex}`);
-            if (laserSelect) {
-                laserSelect.value = laserConfig.laserType;
+            // Only set laser select value if the ship doesn't have a fixed laser
+            if (!hasFixedLaser) {
+                const laserSelect = document.getElementById(`laser-${shipIndex}-${laserIndex}`);
+                if (laserSelect) {
+                    laserSelect.value = laserConfig.laserType;
+                }
             }
 
             // Skip module setting for un-maned lasers

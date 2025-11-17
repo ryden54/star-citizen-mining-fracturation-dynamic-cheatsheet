@@ -3,19 +3,30 @@
 
 // Ship specifications
 const shipData = {
+    'golem': {
+        name: 'Golem',
+        manufacturer: 'Drake Interplanetary',
+        capacity: 32,
+        laserCount: 1,
+        laserSize: 1,
+        fixedLaser: 'pitman',
+        order: 1
+    },
     'prospector': {
         name: 'Prospector',
         manufacturer: 'MISC',
         capacity: 32,
         laserCount: 1,
-        laserSize: 1
+        laserSize: 1,
+        order: 2
     },
     'mole': {
         name: 'MOLE',
         manufacturer: 'Argo Astronautics',
         capacity: 96,
         laserCount: 3,
-        laserSize: 2
+        laserSize: 2,
+        order: 3
     }
 };
 
@@ -79,6 +90,18 @@ const laserData = {
         size: 1,
         name: 'Impact I',
         description: 'High extraction speed. Trade-off: Increased rock resistance and inert materials.'
+    },
+    'pitman': {
+        fracturingPower: 3150,
+        extractionPower: 1850,
+        instability: 1.0,
+        resistance: 1.0,
+        moduleSlots: 2,
+        size: 1,
+        name: 'Pitman Mining Laser',
+        description: 'Dedicated laser for the Golem. Designed for beginners with easy operator experience.',
+        isFixed: true,
+        compatibleShips: ['golem']
     },
     // Size 2 lasers (MOLE-compatible)
     'arbor-mh2': {

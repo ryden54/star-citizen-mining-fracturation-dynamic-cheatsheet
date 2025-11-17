@@ -195,6 +195,23 @@ h2 {
     font-weight: 500;
 }
 
+.ship-header select {
+    max-width: 340px;
+    flex: 1;
+}
+
+/* Mobile specific: prevent overlap with delete button */
+@media (max-width: 767px) {
+    .ship-header select {
+        max-width: calc(100% - 100px);
+        width: 100%;
+    }
+
+    .ship-header > div {
+        padding-right: 50px;
+    }
+}
+
 .modules-container {
     display: flex;
     flex-direction: column;
