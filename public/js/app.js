@@ -4,7 +4,15 @@
 // Dynamically load the scripts to populate window.FracturationParty
 // In test environment (Node/Vitest), we need to load these files
 // They will execute and populate window.FracturationParty
-await import('./data.js');
+
+// Data modules (must load first)
+await import('./data/ships.js');
+await import('./data/lasers.js');
+await import('./data/modules.js');
+await import('./data/gadgets.js');
+await import('./data/index.js');
+
+// Core modules
 await import('./calculations.js');
 await import('./chart.js');
 await import('./url-state.js');

@@ -42,7 +42,14 @@
     </div>
 
     <!-- Load scripts in dependency order (classic scripts work with file:// URLs) -->
-    <script src="js/data.js"></script>
+    <!-- Data modules (must load before calculations/ui) -->
+    <script src="js/data/ships.js"></script>
+    <script src="js/data/lasers.js"></script>
+    <script src="js/data/modules.js"></script>
+    <script src="js/data/gadgets.js"></script>
+    <script src="js/data/index.js"></script>
+
+    <!-- Core modules -->
     <script src="js/calculations.js"></script>
     <script src="js/chart.js"></script>
     <script src="js/url-state.js"></script>
