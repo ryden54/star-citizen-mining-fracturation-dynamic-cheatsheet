@@ -199,6 +199,60 @@ describe('URL State Management', () => {
             }));
             expect(deserializeConfig(encodeURIComponent(invalidConfig))).toBeNull();
         });
+
+        it('should return null when config is not an object', () => {
+            // Config is a string instead of object
+            const invalidConfig = btoa(JSON.stringify('not an object'));
+            expect(deserializeConfig(encodeURIComponent(invalidConfig))).toBeNull();
+
+            // Config is null
+            const nullConfig = btoa(JSON.stringify(null));
+            expect(deserializeConfig(encodeURIComponent(nullConfig))).toBeNull();
+
+            // Config is an array instead of object
+            const arrayConfig = btoa(JSON.stringify([]));
+            expect(deserializeConfig(encodeURIComponent(arrayConfig))).toBeNull();
+        });
+
+        it('should return null when ships is not an array', () => {
+            const invalidConfig = btoa(JSON.stringify({
+                ships: 'not an array', // String instead of array
+                gadgets: []
+            }));
+            expect(deserializeConfig(encodeURIComponent(invalidConfig))).toBeNull();
+
+            const invalidConfig2 = btoa(JSON.stringify({
+                ships: { type: 'prospector' }, // Object instead of array
+                gadgets: []
+            }));
+            expect(deserializeConfig(encodeURIComponent(invalidConfig2))).toBeNull();
+        });
+
+        it('should return null when gadgets is not an array', () => {
+            const invalidConfig = btoa(JSON.stringify({
+                ships: [{
+                    type: 'prospector',
+                    lasers: [{
+                        laserType: 'arbor',
+                        modules: ['none']
+                    }]
+                }],
+                gadgets: 'not an array' // String instead of array
+            }));
+            expect(deserializeConfig(encodeURIComponent(invalidConfig))).toBeNull();
+
+            const invalidConfig2 = btoa(JSON.stringify({
+                ships: [{
+                    type: 'prospector',
+                    lasers: [{
+                        laserType: 'arbor',
+                        modules: ['none']
+                    }]
+                }],
+                gadgets: { sabir: true } // Object instead of array
+            }));
+            expect(deserializeConfig(encodeURIComponent(invalidConfig2))).toBeNull();
+        });
     });
 
     describe('Round-trip serialization', () => {
@@ -300,6 +354,35 @@ describe('URL State Management', () => {
             expect(deserialized).toBeTruthy();
             expect(deserialized.ships).toEqual(ships);
             expect(deserialized.gadgets).toEqual(gadgets);
+        });
+    });
+
+    describe('clearURLHash', () => {
+        it('should clear the URL hash', () => {
+            // Set a hash first
+            window.location.hash = '#config=test123';
+            expect(window.location.hash).toBe('#config=test123');
+
+            // Clear it
+            urlState.clearURLHash();
+
+            // Hash should be empty
+            expect(window.location.hash).toBe('');
+        });
+
+        it('should preserve pathname and search when clearing hash', () => {
+            // Mock location with search params
+            const originalPathname = window.location.pathname;
+
+            // Set hash
+            window.location.hash = '#config=test456';
+
+            // Clear hash
+            urlState.clearURLHash();
+
+            // Pathname should remain, hash should be gone
+            expect(window.location.pathname).toBe(originalPathname);
+            expect(window.location.hash).toBe('');
         });
     });
 });
