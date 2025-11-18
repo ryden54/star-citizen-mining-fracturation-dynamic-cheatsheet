@@ -102,6 +102,7 @@ function addShip() {
     syncLegacyState();
     updateShipsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -114,6 +115,7 @@ function removeShip(index) {
         syncLegacyState();
         updateShipsUI();
         updateTable();
+        updateURL();
     }
 }
 
@@ -130,6 +132,7 @@ function onShipTypeChange(shipIndex) {
     syncLegacyState();
     updateShipsUI();
     updateTable();
+    updateURL();
 
     // Restore focus to the ship type selector after UI update
     const updatedSelect = document.getElementById(`ship-type-${shipIndex}`);
@@ -164,11 +167,11 @@ function generateLaserStatsHTML(laser, laserKey, referencePower, shipType) {
         statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
     }
 
-    // 3. Instability/optimal window THIRD (quality of life)
+    // 3. Instability THIRD (affects inert materials - higher is worse)
     if (laser.instability !== 1.0) {
         const instVar = (laser.instability - 1.0) * 100;
-        const instColor = instVar > 0 ? 'green' : 'red';
-        statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+        const instColor = instVar > 0 ? 'red' : 'green'; // Reversed: higher instability is bad
+        statsParts.push(`Instability: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
     }
 
     return statsParts.join(', ');
@@ -276,7 +279,7 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
 
             if (laser.instability !== 1.0) {
                 const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+                descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
@@ -490,6 +493,7 @@ function onLaserChange(shipIndex, laserIndex, focusedId = null) {
     syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
+    updateURL();
 }
 
 /**
@@ -518,6 +522,7 @@ function onModuleChange(shipIndex, laserIndex, slotIndex, focusedId = null) {
     syncLegacyState();
     updateShipsUI(null, focusedId);
     updateTable();
+    updateURL();
 }
 
 /**
@@ -527,6 +532,7 @@ function addGadget() {
     gadgets.push('sabir'); // Default gadget
     updateGadgetsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -537,6 +543,7 @@ function removeGadget(index) {
     gadgets.splice(index, 1);
     updateGadgetsUI();
     updateTable();
+    updateURL();
 }
 
 /**
@@ -552,6 +559,7 @@ function onGadgetChange(index, focusedId = null) {
         gadgets[index] = gadgetSelect.value;
         updateGadgetsUI(focusedId);
         updateTable();
+        updateURL();
     }
 }
 
@@ -790,18 +798,56 @@ function updateChart() {
 }
 
 /**
+ * Update URL hash with current configuration
+ */
+function updateURL() {
+    if (window.FracturationParty.urlState) {
+        window.FracturationParty.urlState.updateURLHash(ships, gadgets);
+    }
+}
+
+/**
+ * Load configuration from URL hash if available
+ * @returns {boolean} True if config was loaded from URL, false otherwise
+ */
+function loadFromURL() {
+    if (!window.FracturationParty.urlState) {
+        return false;
+    }
+
+    const config = window.FracturationParty.urlState.loadFromURLHash();
+    if (config && config.ships && config.gadgets) {
+        ships = config.ships;
+        gadgets = config.gadgets;
+        syncLegacyState();
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Initialize the UI
  */
 function initializeUI() {
     if (document.getElementById('ships-container')) {
-        // Initialize with one prospector if ships is empty
-        if (ships.length === 0) {
+        // Try to load configuration from URL first
+        const loadedFromURL = loadFromURL();
+
+        // Initialize with one prospector if ships is empty and nothing loaded from URL
+        if (ships.length === 0 && !loadedFromURL) {
             ships.push(createShip('prospector'));
             syncLegacyState();
         }
+
         updateShipsUI();
         updateGadgetsUI();
         updateTable();
+
+        // Update URL with initial state (if not loaded from URL)
+        if (!loadedFromURL) {
+            updateURL();
+        }
 
         // Add resize listener to redraw chart when window size changes
         let resizeTimeout;

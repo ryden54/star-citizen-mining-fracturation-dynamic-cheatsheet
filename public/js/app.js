@@ -7,6 +7,7 @@
 await import('./data.js');
 await import('./calculations.js');
 await import('./chart.js');
+await import('./url-state.js');
 await import('./ui.js');
 
 // Re-export from window.FracturationParty for tests
@@ -27,3 +28,8 @@ export const generateChartData = window.FracturationParty.chart.generateChartDat
 // UI functions
 export const ui = window.FracturationParty.ui;
 export const generateModuleDescriptionHTML = window.FracturationParty.ui.generateModuleDescriptionHTML;
+
+// URL state functions
+export const urlState = window.FracturationParty.urlState;
+export const serializeConfig = window.FracturationParty.urlState.serializeConfig;
+export const deserializeConfig = window.FracturationParty.urlState.deserializeConfig;

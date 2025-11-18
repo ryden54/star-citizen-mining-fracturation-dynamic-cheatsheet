@@ -221,10 +221,13 @@ function convertShipsFormat(uiShips) {
         if (ship.lasers) {
             // UI format: {type: 'prospector', lasers: [{laserType: 'arbor', modules: ['none']}]}
             ship.lasers.forEach(laserConfig => {
-                calcShips.push({
-                    laser: laserConfig.laserType,
-                    modules: laserConfig.modules.filter(m => m !== 'none')
-                });
+                // Skip un-maned lasers (not operated by crew)
+                if (laserConfig.laserType !== 'un-maned') {
+                    calcShips.push({
+                        laser: laserConfig.laserType,
+                        modules: laserConfig.modules.filter(m => m !== 'none')
+                    });
+                }
             });
         } else if (ship.laser) {
             // Already in calculations format: {laser: 'arbor', modules: []}

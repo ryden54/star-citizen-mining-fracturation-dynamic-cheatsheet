@@ -140,7 +140,7 @@ test.describe('Star Citizen Mining Calculator', () => {
             // 3. Instability/optimal window third (quality of life)
             if (laser.instability !== 1.0) {
                 const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+                descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let expectedText = laser.name;
@@ -660,5 +660,225 @@ test.describe('Star Citizen Mining Calculator', () => {
         const hasHelix = laserOptions.some(option => option.includes('Helix I'));
         expect(hasArbor).toBe(true);
         expect(hasHelix).toBe(true);
+    });
+
+    test('should update URL hash when adding a ship', async ({ page }) => {
+        // Initial URL should have a hash
+        const initialHash = await page.evaluate(() => window.location.hash);
+        expect(initialHash).toContain('#config=');
+
+        // Add a ship
+        await page.click('button:has-text("Add a Ship")');
+        await page.waitForTimeout(100);
+
+        // URL hash should have changed
+        const newHash = await page.evaluate(() => window.location.hash);
+        expect(newHash).toContain('#config=');
+        expect(newHash).not.toBe(initialHash);
+    });
+
+    test('should update URL hash when changing laser type', async ({ page }) => {
+        const initialHash = await page.evaluate(() => window.location.hash);
+
+        // Change laser type
+        await page.selectOption('#laser-0-0', 'helix');
+        await page.waitForTimeout(100);
+
+        const newHash = await page.evaluate(() => window.location.hash);
+        expect(newHash).toContain('#config=');
+        expect(newHash).not.toBe(initialHash);
+    });
+
+    test('should update URL hash when changing module', async ({ page }) => {
+        const initialHash = await page.evaluate(() => window.location.hash);
+
+        // Change a module
+        await page.selectOption('#module-0-0-0', 'rieger');
+        await page.waitForTimeout(100);
+
+        const newHash = await page.evaluate(() => window.location.hash);
+        expect(newHash).toContain('#config=');
+        expect(newHash).not.toBe(initialHash);
+    });
+
+    test('should update URL hash when adding a gadget', async ({ page }) => {
+        const initialHash = await page.evaluate(() => window.location.hash);
+
+        // Add a gadget
+        await page.click('button:has-text("Add Gadget")');
+        await page.waitForTimeout(100);
+
+        const newHash = await page.evaluate(() => window.location.hash);
+        expect(newHash).toContain('#config=');
+        expect(newHash).not.toBe(initialHash);
+    });
+
+    test('should restore configuration from URL hash on page load', async ({ page }) => {
+        // Configure a specific setup
+        await page.click('button:has-text("Add a Ship")'); // Add second ship
+        await page.selectOption('#laser-0-0', 'helix'); // First ship: Helix
+        await page.selectOption('#module-0-0-0', 'rieger'); // Module on first ship
+        await page.click('button:has-text("Add Gadget")'); // Add gadget
+        await page.selectOption('#gadget-0', 'optimax'); // Select OptiMax
+
+        await page.waitForTimeout(200);
+
+        // Get the URL with hash
+        const urlWithHash = await page.evaluate(() => window.location.href);
+
+        // Reload the page with the same hash
+        await page.goto(urlWithHash);
+        await page.waitForTimeout(200);
+
+        // Verify the configuration was restored
+        const shipItems = page.locator('.ship-item');
+        await expect(shipItems).toHaveCount(2);
+
+        const firstLaser = await page.locator('#laser-0-0').inputValue();
+        expect(firstLaser).toBe('helix');
+
+        const firstModule = await page.locator('#module-0-0-0').inputValue();
+        expect(firstModule).toBe('rieger');
+
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+
+        const gadgetType = await page.locator('#gadget-0').inputValue();
+        expect(gadgetType).toBe('optimax');
+    });
+
+    test('should preserve complex configuration through page reload', async ({ page }) => {
+        // Create a complex configuration
+        await page.click('button:has-text("Add a Ship")'); // Ship 2
+        await page.waitForTimeout(100);
+
+        // Configure Ship 1 (Prospector with Helix) - change laser first
+        await page.selectOption('#laser-0-0', 'helix'); // Ship 1: Helix
+        await page.waitForTimeout(200); // Wait for UI update after laser change
+
+        // Now modules are reset, we can select them (only change first two to avoid timing issues)
+        await page.selectOption('#module-0-0-0', 'rieger'); // Module 1
+        await page.waitForTimeout(100);
+        await page.selectOption('#module-0-0-1', 'rieger-c2'); // Module 2
+        await page.waitForTimeout(100);
+
+        // Configure Ship 2 as Golem
+        await page.selectOption('#ship-type-1', 'golem'); // Make it a Golem
+        await page.waitForTimeout(200); // Wait for ship type change
+
+        // Golem has Pitman with 2 module slots
+        await page.selectOption('#module-1-0-0', 'vaux-c2');
+        await page.waitForTimeout(100);
+        await page.selectOption('#module-1-0-1', 'vaux-c3');
+        await page.waitForTimeout(100);
+
+        // Add two gadgets
+        await page.click('button:has-text("Add Gadget")');
+        await page.waitForTimeout(100);
+        await page.click('button:has-text("Add Gadget")');
+        await page.waitForTimeout(100);
+        await page.selectOption('#gadget-0', 'sabir');
+        await page.waitForTimeout(100);
+        await page.selectOption('#gadget-1', 'boremax');
+        await page.waitForTimeout(200);
+
+        // Get URL with configuration
+        const urlWithHash = await page.evaluate(() => window.location.href);
+
+        // Reload page
+        await page.goto(urlWithHash);
+        await page.waitForTimeout(300);
+
+        // Verify all configuration was restored
+        const shipItems = page.locator('.ship-item');
+        await expect(shipItems).toHaveCount(2);
+
+        // Ship 1 (Prospector with Helix)
+        const ship1Type = await page.locator('#ship-type-0');
+        await expect(ship1Type).toBeVisible();
+        expect(await ship1Type.inputValue()).toBe('prospector');
+
+        const ship1Laser = page.locator('#laser-0-0');
+        await expect(ship1Laser).toBeVisible();
+        expect(await ship1Laser.inputValue()).toBe('helix');
+
+        const module1 = page.locator('#module-0-0-0');
+        await expect(module1).toBeVisible();
+        expect(await module1.inputValue()).toBe('rieger');
+
+        const module2 = page.locator('#module-0-0-1');
+        await expect(module2).toBeVisible();
+        expect(await module2.inputValue()).toBe('rieger-c2');
+
+        // Ship 2 (Golem with Pitman)
+        const ship2Type = page.locator('#ship-type-1');
+        await expect(ship2Type).toBeVisible();
+        expect(await ship2Type.inputValue()).toBe('golem');
+
+        const golemModule1 = page.locator('#module-1-0-0');
+        await expect(golemModule1).toBeVisible();
+        expect(await golemModule1.inputValue()).toBe('vaux-c2');
+
+        const golemModule2 = page.locator('#module-1-0-1');
+        await expect(golemModule2).toBeVisible();
+        expect(await golemModule2.inputValue()).toBe('vaux-c3');
+
+        // Gadgets
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(2);
+
+        const gadget1 = page.locator('#gadget-0');
+        await expect(gadget1).toBeVisible();
+        expect(await gadget1.inputValue()).toBe('sabir');
+
+        const gadget2 = page.locator('#gadget-1');
+        await expect(gadget2).toBeVisible();
+        expect(await gadget2.inputValue()).toBe('boremax');
+    });
+
+    test('should handle F5 refresh preserving state', async ({ page }) => {
+        // Configure a setup
+        await page.selectOption('#laser-0-0', 'hofstede');
+        await page.selectOption('#module-0-0-0', 'rieger-c3');
+        await page.click('button:has-text("Add Gadget")');
+
+        await page.waitForTimeout(200);
+
+        // Simulate F5 refresh
+        await page.reload();
+        await page.waitForTimeout(200);
+
+        // Verify state was preserved
+        const laserValue = await page.locator('#laser-0-0').inputValue();
+        expect(laserValue).toBe('hofstede');
+
+        const moduleValue = await page.locator('#module-0-0-0').inputValue();
+        expect(moduleValue).toBe('rieger-c3');
+
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(1);
+    });
+
+    test('should load default configuration when no hash in URL', async ({ page }) => {
+        // Navigate to page without hash
+        const urlWithoutHash = fileUrl;
+        await page.goto(urlWithoutHash);
+        await page.waitForTimeout(200);
+
+        // Should have default configuration (1 Prospector with Arbor)
+        const shipItems = page.locator('.ship-item');
+        await expect(shipItems).toHaveCount(1);
+
+        const laserSelect = page.locator('#laser-0-0');
+        const laserValue = await laserSelect.inputValue();
+        expect(laserValue).toBe('arbor');
+
+        // Should have no gadgets
+        const gadgetItems = page.locator('.gadget-item');
+        await expect(gadgetItems).toHaveCount(0);
+
+        // But URL should be updated with the default config
+        const hash = await page.evaluate(() => window.location.hash);
+        expect(hash).toContain('#config=');
     });
 });
