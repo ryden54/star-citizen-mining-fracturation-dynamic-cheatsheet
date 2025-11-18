@@ -140,7 +140,7 @@ test.describe('Star Citizen Mining Calculator', () => {
             // 3. Instability/optimal window third (quality of life)
             if (laser.instability !== 1.0) {
                 const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+                descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let expectedText = laser.name;

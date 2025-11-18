@@ -167,11 +167,11 @@ function generateLaserStatsHTML(laser, laserKey, referencePower, shipType) {
         statsParts.push(`Res: <span style="color:${resColor};">${resVar > 0 ? '+' : ''}${resVar.toFixed(0)}%</span>`);
     }
 
-    // 3. Instability/optimal window THIRD (quality of life)
+    // 3. Instability THIRD (affects inert materials - higher is worse)
     if (laser.instability !== 1.0) {
         const instVar = (laser.instability - 1.0) * 100;
-        const instColor = instVar > 0 ? 'green' : 'red';
-        statsParts.push(`Opt. window: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
+        const instColor = instVar > 0 ? 'red' : 'green'; // Reversed: higher instability is bad
+        statsParts.push(`Instability: <span style="color:${instColor};">${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%</span>`);
     }
 
     return statsParts.join(', ');
@@ -279,7 +279,7 @@ function updateShipsUI(preservedConfig = null, focusedElementId = null) {
 
             if (laser.instability !== 1.0) {
                 const instVar = (laser.instability - 1.0) * 100;
-                descriptionParts.push(`Opt. window: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
+                descriptionParts.push(`Instability: ${instVar > 0 ? '+' : ''}${instVar.toFixed(0)}%`);
             }
 
             let fullDescription = descriptionParts.length > 0 ? ` (${descriptionParts.join(', ')})` : '';
@@ -786,14 +786,12 @@ function updateTable() {
 function updateChart() {
     const canvas = document.getElementById('capacity-chart');
     if (!canvas || !window.FracturationParty.chart) {
-        console.warn('Chart canvas or chart module not available');
         return;
     }
 
     try {
         const chartData = window.FracturationParty.chart.generateChartData(ships, gadgets);
         window.FracturationParty.chart.drawCapacityChart(canvas, chartData);
-        console.log('Chart updated with', chartData.length, 'data points');
     } catch (error) {
         console.error('Error updating chart:', error);
     }
