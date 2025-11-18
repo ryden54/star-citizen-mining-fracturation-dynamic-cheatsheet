@@ -786,12 +786,14 @@ function updateTable() {
 function updateChart() {
     const canvas = document.getElementById('capacity-chart');
     if (!canvas || !window.FracturationParty.chart) {
+        console.warn('Chart canvas or chart module not available');
         return;
     }
 
     try {
         const chartData = window.FracturationParty.chart.generateChartData(ships, gadgets);
         window.FracturationParty.chart.drawCapacityChart(canvas, chartData);
+        console.log('Chart updated with', chartData.length, 'data points');
     } catch (error) {
         console.error('Error updating chart:', error);
     }
