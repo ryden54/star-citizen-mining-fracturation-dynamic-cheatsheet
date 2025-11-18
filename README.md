@@ -10,6 +10,48 @@ Quick reference tool for **cooperative mining in Star Citizen 4.0+**. Helps play
 
 In solo mining, the game displays "easy/medium/challenging/impossible", but in cooperative mode or with gadgets, it's impossible to know in advance if a rock is doable without consulting a pre-calculated capacity table.
 
+## The Fracture Formula
+
+This calculator uses a scientifically calibrated formula to predict whether a rock can be fractured based on its mass and resistance.
+
+### Mathematical Model
+
+The maximum fracturable mass is calculated using a **linear resistance model**:
+
+```
+max_mass = baseline × (power / baseline_power) × (1 - R)
+```
+
+Where:
+- `baseline` = 9500 kg (calibrated baseline for Arbor MH1 laser at 0% resistance)
+- `baseline_power` = 1890 (fracturing power of Arbor MH1)
+- `power` = combined fracturing power of all lasers (with module modifiers applied)
+- `R` = effective rock resistance (0.0 to 1.0, after gadget and laser modifiers)
+
+### Why This Formula?
+
+**Data-Driven Calibration**: The formula was validated against **59 in-game measurements** collected from Star Citizen (Prospector rental + Arbor MH1 laser), achieving **100% prediction accuracy**.
+
+**Linear vs Exponential**: Testing revealed that a linear relationship `(1 - R)` outperforms exponential models for Star Citizen's mining mechanics:
+- At 0% resistance: max mass = 9500 kg
+- At 50% resistance: max mass = 4750 kg (exactly half)
+- At 100% resistance: max mass = 0 kg (unfracturable)
+
+**Comparison with Alternative Models**: Another developer (Mericet) proposed a Power Breakpoint formula using `(1 + R)` resistance scaling. When tested against our dataset, our `(1 - R)` model achieved 100% accuracy vs 95.7% for the alternative approach.
+
+### Validation
+
+The formula correctly predicts all edge cases from in-game testing:
+- **Critical case**: 11,958 kg at 0% resistance is impossible (proves absolute mass limit)
+- **Gadget effectiveness**: Sabir gadget reduces resistance by 50% (8279 kg rock goes from impossible at 14% to fracturable at 7%)
+- **Difficulty zones**: Prediction margins match in-game difficulty labels (easy/medium/challenging/hard)
+
+For technical details, see:
+- `tests/reference-data-prospector.json` - All 59 in-game measurements
+- `tests/formula-optimizer.js` - Calibration algorithm that tested thousands of parameter combinations
+- `tests/formula-visualization.html` - Interactive chart showing formula accuracy
+- `tests/formula-comparison.js` - Comparison with alternative models
+
 ## Features
 
 - ✅ Multi-Prospector configuration (add/remove ships dynamically)

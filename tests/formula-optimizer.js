@@ -61,8 +61,12 @@ thresholds.forEach(threshold => {
 // Test 3: Exponential formula with different exponents
 console.log('\n\nTEST 3: Exponential formula: maxMass = baseline * (1 - resistance)^exponent\n');
 
-const baselines = [8000, 9000, 10000, 11000, 12000];
-const exponents = [1.0, 1.2, 1.5, 1.8, 2.0, 2.2, 2.5];
+const baselines = [8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000];
+// Test fine-grained exponents to find 100% accurate formula
+const exponents = [];
+for (let exp = 0.8; exp <= 2.5; exp += 0.05) {
+    exponents.push(parseFloat(exp.toFixed(2)));
+}
 
 let bestAccuracy = 0;
 let bestParams = null;

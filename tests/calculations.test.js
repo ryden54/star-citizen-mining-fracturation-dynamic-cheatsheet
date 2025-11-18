@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
 import {
     laserData,
     moduleData,
@@ -111,14 +112,14 @@ describe('calculateCombinedModifiers', () => {
 describe('calculateMaxMass', () => {
     it('should calculate realistic max mass for single Arbor at 0% resistance', () => {
         const maxMass = calculateMaxMass(0.0, createShips('arbor'));
-        // The formula is based on a baseline of 10000kg for an Arbor (validated against in-game data)
-        expect(maxMass).toBeCloseTo(10000, -2); // Within a tolerance of 100kg
+        // The formula is based on a baseline of 9500kg for an Arbor (validated against 59 in-game measurements)
+        expect(maxMass).toBeCloseTo(9500, -2); // Within a tolerance of 100kg
     });
 
     it('should calculate max mass for single Arbor at 0.25 resistance', () => {
         const maxMass = calculateMaxMass(0.25, createShips('arbor'));
-        // Linear formula: 10000 * (1 - 0.25) = 7500
-        const expectedMass = 10000 * (1 - 0.25);
+        // Linear formula: 9500 * (1 - 0.25) = 7125
+        const expectedMass = 9500 * (1 - 0.25);
         expect(maxMass).toBeCloseTo(expectedMass, -2);
     });
 
@@ -277,8 +278,8 @@ describe('calculateMaxMass with gadgets', () => {
         const effectiveResistance = rockResistanceAfterGadget * 0.7; // 0.175
 
         const maxMass = calculateMaxMass(baseResistance, createShips('helix'), ['sabir']);
-        // Linear formula: 10000 * (helix_power/arbor_power) * (1 - effective_resistance)
-        const expectedMass = 10000 * (laserData.helix.fracturingPower / 1890) * (1 - effectiveResistance);
+        // Linear formula: 9500 * (helix_power/arbor_power) * (1 - effective_resistance)
+        const expectedMass = 9500 * (laserData.helix.fracturingPower / 1890) * (1 - effectiveResistance);
 
         expect(maxMass).toBeCloseTo(expectedMass, -2);
     });
@@ -360,33 +361,8 @@ describe('Real-world scenarios', () => {
 });
 
 describe('In-game reference data validation (Prospector rental)', () => {
-    // Load reference data from in-game screenshots
-    const referenceData = {
-        "metadata": {
-            "description": "Données de référence extraites de captures d'écran in-game (Star Citizen Live)",
-            "ship": "Prospector (location)",
-            "laser": "Arbor MH1 (laser par défaut)",
-            "modules": "Aucun module installé",
-            "gadgets": "Aucun gadget actif",
-            "location": "Surface de lunes (pas d'astéroïdes)",
-            "date": "2025-11-16"
-        },
-        "test_cases": [
-            { "id": 1, "masse_kg": 8414, "resistance_pct": 40, "fracturable": false },
-            { "id": 2, "masse_kg": 4814, "resistance_pct": 44, "fracturable": true },
-            { "id": 3, "masse_kg": 5294, "resistance_pct": 10, "fracturable": true },
-            { "id": 4, "masse_kg": 4814, "resistance_pct": 55, "fracturable": false },
-            { "id": 5, "masse_kg": 7759, "resistance_pct": 39, "fracturable": false },
-            { "id": 6, "masse_kg": 3540, "resistance_pct": 28, "fracturable": true },
-            { "id": 7, "masse_kg": 7097, "resistance_pct": 36, "fracturable": false },
-            { "id": 8, "masse_kg": 1456, "resistance_pct": 39, "fracturable": true },
-            { "id": 9, "masse_kg": 5314, "resistance_pct": 54, "fracturable": false },
-            { "id": 10, "masse_kg": 5678, "resistance_pct": 62, "fracturable": false },
-            { "id": 11, "masse_kg": 1138, "resistance_pct": 38, "fracturable": true },
-            { "id": 12, "masse_kg": 6418, "resistance_pct": 31, "fracturable": true },
-            { "id": 13, "masse_kg": 3366, "resistance_pct": 20, "fracturable": true }
-        ]
-    };
+    // Load reference data from in-game measurements
+    const referenceData = JSON.parse(readFileSync('./tests/reference-data-prospector.json', 'utf-8'));
 
     // Helper function to check if a rock is fracturable
     function canFracture(rockMass, rockResistance, ships, gadgets = []) {
@@ -398,8 +374,8 @@ describe('In-game reference data validation (Prospector rental)', () => {
     const prospectorConfig = createShips('arbor');
 
     it('should load reference data correctly', () => {
-        expect(referenceData.test_cases).toHaveLength(13);
-        expect(referenceData.metadata.ship).toBe('Prospector (location)');
+        expect(referenceData.test_cases).toHaveLength(59);
+        expect(referenceData.metadata.ship).toBe('Prospector (rental)');
     });
 
     it('should validate fracture formula against all in-game measurements', () => {
@@ -492,7 +468,7 @@ describe('In-game reference data validation (Prospector rental)', () => {
             console.log('\n✅ TOUS LES CAS DE TEST SONT CORRECTS!\n');
         }
 
-        // Fail the test if there are any mismatches
+        // Formula should be 100% accurate with baseline=9500
         expect(incorrectPredictions).toBe(0);
     });
 });
