@@ -1,8 +1,8 @@
 // Comparison of Mericet's PBP formula vs our Max Mass formula
 // Run with: node tests/formula-comparison.js
 
-import { readFileSync } from 'fs';
-const referenceData = JSON.parse(readFileSync('./tests/reference-data-prospector.json', 'utf-8'));
+import { REFERENCE_DATA_PROSPECTOR } from '../public/js/data/reference-prospector.js';
+const referenceData = REFERENCE_DATA_PROSPECTOR;
 
 console.log('═══════════════════════════════════════════════════════════');
 console.log('   FORMULA COMPARISON: Mericet PBP vs Our Max Mass');

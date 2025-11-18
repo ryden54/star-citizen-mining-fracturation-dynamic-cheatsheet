@@ -47,10 +47,11 @@ The formula correctly predicts all edge cases from in-game testing:
 - **Difficulty zones**: Prediction margins match in-game difficulty labels (easy/medium/challenging/hard)
 
 For technical details, see:
-- `tests/reference-data-prospector.json` - All 59 in-game measurements
+- `public/js/data/reference-prospector.json` - All 59 in-game measurements
 - `tests/formula-optimizer.js` - Calibration algorithm that tested thousands of parameter combinations
-- `tests/formula-visualization.html` - Interactive chart showing formula accuracy
+- `public/formula-visualization.html` - Interactive chart showing formula accuracy
 - `tests/formula-comparison.js` - Comparison with alternative models
+- `public/js/calculations.js` - Centralized verdict thresholds (VERDICT_THRESHOLDS constant)
 
 ## Features
 

@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
 import {
     laserData,
     moduleData,
@@ -9,6 +8,7 @@ import {
     calculateRockResistance,
     calculateMaxMass
 } from '../public/js/app.js';
+import { REFERENCE_DATA_PROSPECTOR } from '../public/js/data/reference-prospector.js';
 
 // Helper function to create ship configurations
 function createShip(laser, modules = ['none', 'none', 'none']) {
@@ -362,7 +362,7 @@ describe('Real-world scenarios', () => {
 
 describe('In-game reference data validation (Prospector rental)', () => {
     // Load reference data from in-game measurements
-    const referenceData = JSON.parse(readFileSync('./tests/reference-data-prospector.json', 'utf-8'));
+    const referenceData = REFERENCE_DATA_PROSPECTOR;
 
     // Helper function to check if a rock is fracturable
     function canFracture(rockMass, rockResistance, ships, gadgets = []) {

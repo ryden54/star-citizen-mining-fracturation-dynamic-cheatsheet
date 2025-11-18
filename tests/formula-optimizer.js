@@ -1,8 +1,8 @@
 // Script to find optimal fracture formula parameters
 // Run with: node tests/formula-optimizer.js
 
-import { readFileSync } from 'fs';
-const referenceData = JSON.parse(readFileSync('./tests/reference-data-prospector.json', 'utf-8'));
+import { REFERENCE_DATA_PROSPECTOR } from '../public/js/data/reference-prospector.js';
+const referenceData = REFERENCE_DATA_PROSPECTOR;
 
 const ARBOR_POWER = 1890; // Fracturing power from starcitizen.tools
 

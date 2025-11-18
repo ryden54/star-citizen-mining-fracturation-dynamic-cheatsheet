@@ -1,4 +1,6 @@
-{
+// Reference data for Prospector + Arbor MH1 laser
+// Can be used both as ES6 module (import) and global variable (window)
+const REFERENCE_DATA_PROSPECTOR = {
   "metadata": {
     "description": "Données de référence extraites de mesures in-game (Star Citizen)",
     "ship": "Prospector (rental)",
@@ -173,4 +175,14 @@
     { "id": 58, "masse_kg": 6002, "resistance_pct": 13, "fracturable": true, "difficulty": "medium" },
     { "id": 59, "masse_kg": 3434, "resistance_pct": 21, "fracturable": true, "difficulty": "easy" }
   ]
+};
+
+// Export for ES6 modules (tests)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { REFERENCE_DATA_PROSPECTOR };
+}
+
+// Export to global namespace for browser
+if (typeof window !== 'undefined') {
+  window.REFERENCE_DATA_PROSPECTOR = REFERENCE_DATA_PROSPECTOR;
 }
