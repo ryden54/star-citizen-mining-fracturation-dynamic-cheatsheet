@@ -18,7 +18,7 @@
     "@playwright/test": "1.56.1",
     "@vitest/coverage-istanbul": "^4.0.8",
     "@vitest/ui": "^4.0.8",
-    "glob": "^11.0.3",
+    "glob": "^11.1.0",
     "happy-dom": "^20.0.10",
     "monocart-coverage-reports": "^2.12.9",
     "vitest": "^4.0.8"
