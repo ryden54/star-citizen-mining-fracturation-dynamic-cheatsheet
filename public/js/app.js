@@ -16,7 +16,15 @@ await import('./data/index.js');
 await import('./calculations.js');
 await import('./chart.js');
 await import('./url-state.js');
-await import('./ui.js');
+
+// UI modules (must load in dependency order)
+await import('./ui/state-manager.js');
+await import('./ui/ship-utils.js');
+await import('./ui/html-generators.js');
+await import('./ui/rendering.js');
+await import('./ui/gadget-ui.js');
+await import('./ui/ship-ui.js');
+await import('./ui/index.js');
 
 // Re-export from window.FracturationParty for tests
 export const shipData = window.FracturationParty.data.shipData;
