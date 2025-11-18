@@ -42,11 +42,26 @@
     </div>
 
     <!-- Load scripts in dependency order (classic scripts work with file:// URLs) -->
-    <script src="js/data.js"></script>
+    <!-- Data modules (must load before calculations/ui) -->
+    <script src="js/data/ships.js"></script>
+    <script src="js/data/lasers.js"></script>
+    <script src="js/data/modules.js"></script>
+    <script src="js/data/gadgets.js"></script>
+    <script src="js/data/index.js"></script>
+
+    <!-- Core modules -->
     <script src="js/calculations.js"></script>
     <script src="js/chart.js"></script>
     <script src="js/url-state.js"></script>
-    <script src="js/ui.js"></script>
+
+    <!-- UI modules (must load in dependency order) -->
+    <script src="js/ui/state-manager.js"></script>
+    <script src="js/ui/ship-utils.js"></script>
+    <script src="js/ui/html-generators.js"></script>
+    <script src="js/ui/rendering.js"></script>
+    <script src="js/ui/gadget-ui.js"></script>
+    <script src="js/ui/ship-ui.js"></script>
+    <script src="js/ui/index.js"></script>
 
     <!-- Initialize UI after all scripts are loaded -->
     <script>

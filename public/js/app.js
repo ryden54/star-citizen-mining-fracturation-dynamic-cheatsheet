@@ -4,11 +4,27 @@
 // Dynamically load the scripts to populate window.FracturationParty
 // In test environment (Node/Vitest), we need to load these files
 // They will execute and populate window.FracturationParty
-await import('./data.js');
+
+// Data modules (must load first)
+await import('./data/ships.js');
+await import('./data/lasers.js');
+await import('./data/modules.js');
+await import('./data/gadgets.js');
+await import('./data/index.js');
+
+// Core modules
 await import('./calculations.js');
 await import('./chart.js');
 await import('./url-state.js');
-await import('./ui.js');
+
+// UI modules (must load in dependency order)
+await import('./ui/state-manager.js');
+await import('./ui/ship-utils.js');
+await import('./ui/html-generators.js');
+await import('./ui/rendering.js');
+await import('./ui/gadget-ui.js');
+await import('./ui/ship-ui.js');
+await import('./ui/index.js');
 
 // Re-export from window.FracturationParty for tests
 export const shipData = window.FracturationParty.data.shipData;

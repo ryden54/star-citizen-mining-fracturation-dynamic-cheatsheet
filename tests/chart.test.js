@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Import the module to test
-await import('../public/js/data.js');
+await import('../public/js/data/ships.js');
+await import('../public/js/data/lasers.js');
+await import('../public/js/data/modules.js');
+await import('../public/js/data/gadgets.js');
+await import('../public/js/data/index.js');
 await import('../public/js/calculations.js');
 await import('../public/js/chart.js');
 
