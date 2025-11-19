@@ -63,7 +63,6 @@ function deserializeConfig(encodedConfig) {
 
         return config;
     } catch (e) {
-        console.error('Failed to deserialize config:', e);
         return null;
     }
 }
