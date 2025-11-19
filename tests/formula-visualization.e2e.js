@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './coverage-test.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -8,15 +8,14 @@ const __dirname = dirname(__filename);
 test.describe('Formula Visualization Page', () => {
     let pageUrl;
 
-    test.beforeEach(async () => {
+    test.beforeEach(async ({ page }) => {
         // Construct absolute file path to the visualization page
         const htmlPath = join(__dirname, '..', 'public', 'formula-visualization.html');
         pageUrl = `file:///${htmlPath.replace(/\\/g, '/')}`;
+        await page.goto(pageUrl);
     });
 
     test('should load the visualization page correctly', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Check page title
         await expect(page).toHaveTitle(/Fracture Formula Visualization/);
 
@@ -32,8 +31,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should display statistics cards', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Wait for stats to be populated
         await page.waitForSelector('.stat-card', { timeout: 5000 });
 
@@ -53,8 +50,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should display the chart canvas', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Check canvas exists
         const canvas = page.locator('#fractureChart');
         await expect(canvas).toBeVisible();
@@ -66,8 +61,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should display the formula info banner', async ({ page }) => {
-        await page.goto(pageUrl);
-
         const formulaInfo = page.locator('.formula-info');
         await expect(formulaInfo).toBeVisible();
         await expect(formulaInfo).toContainText('max_mass = 9500 × (1 - resistance)');
@@ -75,8 +68,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should display custom legend', async ({ page }) => {
-        await page.goto(pageUrl);
-
         const legend = page.locator('#legend');
         await expect(legend).toBeVisible();
 
@@ -93,8 +84,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should support zoom functionality on chart', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Wait for chart to be fully rendered
         await page.waitForTimeout(500);
 
@@ -123,8 +112,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should display footer with metadata', async ({ page }) => {
-        await page.goto(pageUrl);
-
         const footer = page.locator('footer');
         await expect(footer).toBeVisible();
         await expect(footer).toContainText('Generated with Claude Code');
@@ -133,8 +120,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should have working Chart.js instance', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Wait for chart initialization
         await page.waitForTimeout(500);
 
@@ -148,8 +133,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should load reference data correctly', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Check that reference data is available globally
         const dataLoaded = await page.evaluate(() => {
             return window.REFERENCE_DATA_PROSPECTOR !== undefined &&
@@ -161,8 +144,6 @@ test.describe('Formula Visualization Page', () => {
     });
 
     test('should have zoom plugin loaded', async ({ page }) => {
-        await page.goto(pageUrl);
-
         // Verify zoom plugin is available
         const hasZoomPlugin = await page.evaluate(() => {
             return window.Chart !== undefined &&
