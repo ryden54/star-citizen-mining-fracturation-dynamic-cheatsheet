@@ -59,7 +59,7 @@ describe('Ship UI functions', () => {
         ui.initializeUI();
 
         // After initialization, ensure ship count is 1
-        ui.setShipCount(1);
+        ui.setShips([ui.createShip('prospector')]);
     });
 
     it('removeShip should preserve modules of ships with index < removed index', () => {
@@ -435,7 +435,7 @@ describe('MOLE Ship Support', () => {
     describe('onShipTypeChange', () => {
         beforeEach(() => {
             ui.initializeUI();
-            ui.setShipCount(1);
+            ui.setShips([ui.createShip('prospector')]);
             ui.setShips([ui.createShip('prospector')]);
             ui.updateShipsUI();
         });
@@ -535,7 +535,7 @@ describe('MOLE Ship Support', () => {
     describe('onLaserChange with un-maned laser', () => {
         beforeEach(() => {
             ui.initializeUI();
-            ui.setShipCount(1);
+            ui.setShips([ui.createShip('prospector')]);
             ui.setShips([ui.createShip('mole')]);
             ui.updateShipsUI();
         });

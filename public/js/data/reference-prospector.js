@@ -1,0 +1,188 @@
+// Reference data for Prospector + Arbor MH1 laser
+// Can be used both as ES6 module (import) and global variable (window)
+const REFERENCE_DATA_PROSPECTOR = {
+  "metadata": {
+    "description": "Données de référence extraites de mesures in-game (Star Citizen)",
+    "ship": "Prospector (rental)",
+    "laser": "Arbor MH1 (laser par défaut)",
+    "modules": "Aucun module installé",
+    "gadgets": "Aucun gadget actif (sauf mention contraire)",
+    "location": "Surface de lunes (pas d'astéroïdes)",
+    "date": "2025-01-19",
+    "purpose": "Valider la fidélité de la logique de calcul de fracturation",
+    "notes": "La possibilité de fracturer dépend de la masse et de la résistance de la roche. L'instabilité n'est pas prise en compte. Dataset combiné: 13 mesures initiales + 46 nouvelles mesures = 59 au total."
+  },
+  "laser_specs": {
+    "name": "Arbor MH1",
+    "power": 2.4,
+    "type": "helix",
+    "throttle_speed": 1.0,
+    "resistance_modifier": 1.0,
+    "instability_modifier": 1.0,
+    "optimal_window_modifier": 1.0,
+    "optimal_charge_window_size": 0.2,
+    "shatter_damage_modifier": 1.0
+  },
+  "test_cases": [
+    {
+      "id": 1,
+      "masse_kg": 8414,
+      "resistance_pct": 40,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd pour le laser Arbor (mesure initiale)"
+    },
+    {
+      "id": 2,
+      "masse_kg": 4814,
+      "resistance_pct": 44,
+      "fracturable": true,
+      "difficulty": "hard",
+      "notes": "Même masse que #4, mais résistance plus faible - difficulté élevée (mesure initiale)"
+    },
+    {
+      "id": 3,
+      "masse_kg": 5294,
+      "resistance_pct": 10,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Faible résistance, fracturation facile (mesure initiale)"
+    },
+    {
+      "id": 4,
+      "masse_kg": 4814,
+      "resistance_pct": 55,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Même masse que #2, mais 11% résistance en plus = impossible (mesure initiale)"
+    },
+    {
+      "id": 5,
+      "masse_kg": 7759,
+      "resistance_pct": 39,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd (mesure initiale)"
+    },
+    {
+      "id": 6,
+      "masse_kg": 3540,
+      "resistance_pct": 28,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Fracturation facile, devrait avoir une bonne marge de sécurité (mesure initiale)"
+    },
+    {
+      "id": 7,
+      "masse_kg": 7097,
+      "resistance_pct": 36,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Trop lourd (mesure initiale)"
+    },
+    {
+      "id": 8,
+      "masse_kg": 1456,
+      "resistance_pct": 39,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Petite roche, fracturation facile (mesure initiale)"
+    },
+    {
+      "id": 9,
+      "masse_kg": 5314,
+      "resistance_pct": 54,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Résistance trop élevée (mesure initiale)"
+    },
+    {
+      "id": 10,
+      "masse_kg": 5678,
+      "resistance_pct": 62,
+      "fracturable": false,
+      "difficulty": "impossible",
+      "notes": "Résistance très élevée (mesure initiale)"
+    },
+    {
+      "id": 11,
+      "masse_kg": 1138,
+      "resistance_pct": 38,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Petite roche, fracturation facile (mesure initiale)"
+    },
+    {
+      "id": 12,
+      "masse_kg": 6418,
+      "resistance_pct": 31,
+      "fracturable": true,
+      "difficulty": "challenging",
+      "notes": "Grosse roche, difficulté moyenne-haute mais possible (mesure initiale)"
+    },
+    {
+      "id": 13,
+      "masse_kg": 3366,
+      "resistance_pct": 20,
+      "fracturable": true,
+      "difficulty": "easy",
+      "notes": "Faible résistance, fracturation facile (mesure initiale)"
+    },
+    { "id": 14, "masse_kg": 2510, "resistance_pct": 23, "fracturable": true, "difficulty": "easy" },
+    { "id": 15, "masse_kg": 1231, "resistance_pct": 35, "fracturable": true, "difficulty": "easy" },
+    { "id": 16, "masse_kg": 364, "resistance_pct": 14, "fracturable": true, "difficulty": "easy" },
+    { "id": 17, "masse_kg": 280, "resistance_pct": 20, "fracturable": true, "difficulty": "easy" },
+    { "id": 18, "masse_kg": 550, "resistance_pct": 17, "fracturable": true, "difficulty": "easy" },
+    { "id": 19, "masse_kg": 5934, "resistance_pct": 22, "fracturable": true, "difficulty": "medium" },
+    { "id": 20, "masse_kg": 8905, "resistance_pct": 16, "fracturable": false, "difficulty": "impossible" },
+    { "id": 21, "masse_kg": 677, "resistance_pct": 12, "fracturable": true, "difficulty": "easy" },
+    { "id": 22, "masse_kg": 19421, "resistance_pct": 10, "fracturable": false, "difficulty": "impossible" },
+    { "id": 23, "masse_kg": 2356, "resistance_pct": 13, "fracturable": true, "difficulty": "easy" },
+    { "id": 24, "masse_kg": 2748, "resistance_pct": 10, "fracturable": true, "difficulty": "easy" },
+    { "id": 25, "masse_kg": 1762, "resistance_pct": 23, "fracturable": true, "difficulty": "easy" },
+    { "id": 26, "masse_kg": 8279, "resistance_pct": 14, "fracturable": false, "difficulty": "impossible", "notes": "Même roche que #27, sans gadget" },
+    { "id": 27, "masse_kg": 8279, "resistance_pct": 9, "fracturable": true, "difficulty": "challenging", "notes": "Même roche que #26, AVEC Sabir (-50% résistance: 14% * 0.5 = 7%, arrondi 9%)" },
+    { "id": 28, "masse_kg": 743, "resistance_pct": 0, "fracturable": true, "difficulty": "easy" },
+    { "id": 29, "masse_kg": 820, "resistance_pct": 19, "fracturable": true, "difficulty": "easy" },
+    { "id": 30, "masse_kg": 6027, "resistance_pct": 0, "fracturable": true, "difficulty": "easy" },
+    { "id": 31, "masse_kg": 5736, "resistance_pct": 15, "fracturable": true, "difficulty": "medium" },
+    { "id": 32, "masse_kg": 2096, "resistance_pct": 11, "fracturable": true, "difficulty": "easy" },
+    { "id": 33, "masse_kg": 40371, "resistance_pct": 16, "fracturable": false, "difficulty": "impossible" },
+    { "id": 34, "masse_kg": 20171, "resistance_pct": 15, "fracturable": false, "difficulty": "impossible" },
+    { "id": 35, "masse_kg": 11958, "resistance_pct": 0, "fracturable": false, "difficulty": "impossible", "notes": "CRITIQUE: Résistance 0% mais impossible - dépasse baseline" },
+    { "id": 36, "masse_kg": 4778, "resistance_pct": 17, "fracturable": true, "difficulty": "easy" },
+    { "id": 37, "masse_kg": 16019, "resistance_pct": 20, "fracturable": false, "difficulty": "impossible" },
+    { "id": 38, "masse_kg": 18936, "resistance_pct": 6, "fracturable": false, "difficulty": "impossible" },
+    { "id": 39, "masse_kg": 9272, "resistance_pct": 28, "fracturable": false, "difficulty": "impossible" },
+    { "id": 40, "masse_kg": 34656, "resistance_pct": 32, "fracturable": false, "difficulty": "impossible" },
+    { "id": 41, "masse_kg": 10840, "resistance_pct": 28, "fracturable": false, "difficulty": "impossible" },
+    { "id": 42, "masse_kg": 485, "resistance_pct": 33, "fracturable": true, "difficulty": "easy" },
+    { "id": 43, "masse_kg": 755, "resistance_pct": 33, "fracturable": true, "difficulty": "easy" },
+    { "id": 44, "masse_kg": 22183, "resistance_pct": 12, "fracturable": false, "difficulty": "impossible" },
+    { "id": 45, "masse_kg": 10929, "resistance_pct": 23, "fracturable": false, "difficulty": "impossible" },
+    { "id": 46, "masse_kg": 1243, "resistance_pct": 14, "fracturable": true, "difficulty": "easy" },
+    { "id": 47, "masse_kg": 299, "resistance_pct": 17, "fracturable": true, "difficulty": "easy" },
+    { "id": 48, "masse_kg": 21070, "resistance_pct": 7, "fracturable": false, "difficulty": "impossible" },
+    { "id": 49, "masse_kg": 9431, "resistance_pct": 29, "fracturable": false, "difficulty": "impossible" },
+    { "id": 50, "masse_kg": 1359, "resistance_pct": 31, "fracturable": true, "difficulty": "easy" },
+    { "id": 51, "masse_kg": 15732, "resistance_pct": 41, "fracturable": false, "difficulty": "impossible" },
+    { "id": 52, "masse_kg": 2291, "resistance_pct": 9, "fracturable": true, "difficulty": "easy" },
+    { "id": 53, "masse_kg": 13478, "resistance_pct": 32, "fracturable": false, "difficulty": "impossible" },
+    { "id": 54, "masse_kg": 2434, "resistance_pct": 32, "fracturable": true, "difficulty": "easy" },
+    { "id": 55, "masse_kg": 24787, "resistance_pct": 18, "fracturable": false, "difficulty": "impossible" },
+    { "id": 56, "masse_kg": 12750, "resistance_pct": 22, "fracturable": false, "difficulty": "impossible" },
+    { "id": 57, "masse_kg": 656, "resistance_pct": 18, "fracturable": true, "difficulty": "easy" },
+    { "id": 58, "masse_kg": 6002, "resistance_pct": 13, "fracturable": true, "difficulty": "medium" },
+    { "id": 59, "masse_kg": 3434, "resistance_pct": 21, "fracturable": true, "difficulty": "easy" }
+  ]
+};
+
+// Export for ES6 modules (tests)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { REFERENCE_DATA_PROSPECTOR };
+}
+
+// Export to global namespace for browser
+if (typeof window !== 'undefined') {
+  window.REFERENCE_DATA_PROSPECTOR = REFERENCE_DATA_PROSPECTOR;
+}

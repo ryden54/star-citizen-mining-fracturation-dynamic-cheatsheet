@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fracture Formula Visualization - Star Citizen Mining</title>
+    <link rel="stylesheet" href="css/formula-visualization.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="js/calculations.js"></script>
+    <script src="js/data/reference-prospector.js"></script>
+    <script src="js/formula-visualization.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Fracture Formula Visualization</h1>
+            <div class="subtitle">Star Citizen Mining - Prospector (Arbor MH1)</div>
+        </header>
+
+        <div class="formula-info">
+            <strong>Formula:</strong> <code>max_mass = 9500 × (1 - resistance)</code>
+            <span style="float: right; color: #a0a0a0; font-size: 0.9rem;">💡 Use mouse wheel to zoom, drag to pan, double-click to reset</span>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="chart-container">
+            <canvas id="fractureChart"></canvas>
+        </div>
+
+        <div class="legend" id="legend"></div>
+
+        <footer>
+            🤖 Generated with Claude Code | Data: 59 in-game measurements | Accuracy: 100%
+        </footer>
+    </div>
+</body>
+</html>
